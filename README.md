@@ -1,6 +1,6 @@
 # devops-with-kubernetes
 
-> Please raise a github issue if my submission has any problems, Mr. [mluukkai](https://github.com/mluukkai). Thank you for the awesome course!
+> Please raise a github issue if my submission has any problems, Mr. [mluukkai](https://github.com/mluukkai) & team. Thank you for the awesome course!
 
 ### Exercises
 
