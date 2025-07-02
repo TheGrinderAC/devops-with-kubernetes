@@ -1,4 +1,4 @@
-# 1.1 Kubernetes Deployment Console Logs
+# 1.2 Kubernetes Deployment Console Logs
 
 ### Docker Build
 
