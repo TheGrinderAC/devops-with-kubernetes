@@ -7,4 +7,4 @@
 ### Chapter 2:
 
 - [1.1](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.1)
-# devops-with-kubernetes
+- [1.2](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.2)
