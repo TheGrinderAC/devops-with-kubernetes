@@ -1,28 +1,13 @@
-# 1.3. Declarative approach
-
-### Deployment Creation
+# 1.7. External access with Ingress
 
 ```bash
-$ kubectl apply -f deployment.yaml
+$ kubectl apply -f manifests
 ```
 
 ```yaml
 deployment.apps/log-output created
+ingress.networking.k8s.io/log-output-ingress created
+service/log-output-svc created
 ```
 
-## Application Logs
-
-```javascript
-NAME                          READY   STATUS    RESTARTS   AGE
-log-output-65545d5d8f-7wxpt   1/1     Running   0          6s
-```
-
-```bash
-$ kubectl logs -f log-output-65545d5d8f-7wxpt
-```
-
-```javascript
-2025-07-03T13:12:08.529Z: ee3656a3-c61a-4803-84db-9eded653efd6
-2025-07-03T13:12:13.534Z: ee3656a3-c61a-4803-84db-9eded653efd6
-2025-07-03T13:12:18.539Z: ee3656a3-c61a-4803-84db-9eded653efd6
-```
+![img](./image.png)
