@@ -1,30 +1,21 @@
-# 1.5. The project, step3
+# 1.6. The project, step4(NodePort)
 
-### Deployment Creation
+### Service Deployment Creation
 
 ```bash
-$  kubectl apply -f manifests/deployment.yaml
+$  kubectl apply -f service.yaml
 ```
 
 ```yaml
-deployment.apps/todo-app created
+service/todo-app-svc configured
 ```
 
-## Application Logs
-
-```javascript
-NAME                        READY   STATUS              RESTARTS   AGE
-todo-app-6c577f78d8-mrztp   0/1     ContainerCreating   0          9s
-```
-
-```bash
-$ kubectl port-forward todo-app-6c577f78d8-mrztp 3003:3000
-```
-
-```javascript
-Forwarding from 127.0.0.1:3003 -> 3000
-Forwarding from [::1]:3003 -> 3000
-Handling connection for 3003
-```
-
+Successfully running on: http://localhost:8082
 ![Application Screenshot](./image.png)
+
+Using This Cluster:
+
+````javascript
+k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
+```
+````
