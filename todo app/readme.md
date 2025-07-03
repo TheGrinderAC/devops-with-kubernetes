@@ -1,55 +1,25 @@
-# 1.2 Kubernetes Deployment Console Logs
-
-### Docker Build
-
-```bash
-$ docker build -t bidhe1/todo_app .
-```
-
-### Docker Push
-
-```bash
-PS E:\kubernaties_sub\Kubernet\log_output> docker push bidhe1/todo_app
-```
-
-## Kubernetes Configuration
-
-### Cluster Setup
-
-```bash
-# k3d setup
-$ k3d cluster create -a 2
-```
-
-```bash
-$ kubectl cluster-info
-
-Kubernetes control plane is running at https://host.docker.internal:59674
-CoreDNS is running at https://host.docker.internal:59674/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-Metrics-server is running at https://host.docker.internal:59674/api/v1/namespaces/kube-system/services/https:metrics-server:https/proxy
-```
-
-```bash
-# Set cluster server endpoint
-$ kubectl config set-cluster k3d-k3s-default --server=https://localhost:59674
-```
+# 1.4. The project, step2
 
 ### Deployment Creation
 
 ```bash
-$ kubectl create deployment todoapp --image bidhe1/todo_app
+$  kubectl apply -f deployment.yaml
 ```
 
 ```yaml
-deployment.apps/todoapp created
+deployment.apps/todo-app created
 ```
 
 ## Application Logs
 
-### Real-time Log Output
+```javascript
+NAME                          READY   STATUS    RESTARTS   AGE
+log-output-65545d5d8f-7wxpt   1/1     Running   0          15m
+todo-app-7fdc7cb987-2v6wf     1/1     Running   0          12s
+```
 
 ```bash
-$ kubectl logs -f todoapp-7bb79bfdf4-dskhc
+$  kubectl logs -f todo-app-7fdc7cb987-2v6wf
 ```
 
 ```javascript
@@ -57,18 +27,4 @@ $ kubectl logs -f todoapp-7bb79bfdf4-dskhc
 > node index.js
 
 Server started in port 3000
-```
-
-### Cleanup
-
-```bash
-PS E:\kubernaties_sub\Kubernet\log_output> kubectl delete deployment todoapp
-```
-
-```yaml
-deployment.apps "logoutput" deleted
-```
-
-```bash
-$  k3d cluster delete k3s-default
 ```
