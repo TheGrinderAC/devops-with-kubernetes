@@ -3,14 +3,16 @@
 ### Service Deployment Creation
 
 ```bash
-$  kubectl apply -f service.yaml
+$  kubectl apply -f manifests
 ```
 
 ```yaml
-service/todo-app-svc configured
+deployment.apps/todo-app created
+ingress.networking.k8s.io/todo-app-ingress created
+service/todo-app-svc created
 ```
 
-Successfully running on: http://localhost:8082
+Successfully running on: http://localhost:8081
 ![Application Screenshot](./image.png)
 
 Using This Cluster:
