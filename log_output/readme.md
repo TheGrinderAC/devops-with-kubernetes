@@ -1,13 +1,14 @@
-# 1.7. External access with Ingress
+# 1.9. More services
 
-```bash
-$ kubectl apply -f manifests
-```
+added :
 
 ```yaml
-deployment.apps/log-output created
-ingress.networking.k8s.io/log-output-ingress created
-service/log-output-svc created
-```
+    - path: /pingpong
+    pathType: Prefix
+    backend:
+        service:
+        name: pong-application-svc
+        port:
+            number: 2345
 
-![img](./image.png)
+```
