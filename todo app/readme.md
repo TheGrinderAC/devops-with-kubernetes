@@ -1,4 +1,4 @@
-# 1.6. The project, step4(NodePort)
+# 1.8. The project, step5(ingress)
 
 ### Service Deployment Creation
 
