@@ -4,7 +4,8 @@
   "description": "```bash\r $ kubectl apply -f deployment.yaml\r ```",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start:writer": "node writer.js",
+    "start:reader": "node reader.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
