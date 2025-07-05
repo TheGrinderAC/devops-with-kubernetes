@@ -15,6 +15,9 @@ spec:
       containers:
         - name: todoapp
           image: bidhe1/todo_app:latest
-          env:
-            - name: PORT
-              value: "3000"
+          volumeMounts:
+            - name: image-cache
+              mountPath: /app/storage
+      volumes:
+        - name: image-cache
+          emptyDir: {}
