@@ -1,3 +1,11 @@
-# 2.1. Connecting pods
+# 2.3. Keep them separated
 
-Removed Volume sharing, Instead it use service based internal [networking](../log_output/readme.md) with log_output
+> Created a namespace called exercises for the applications in the exercises. Move the "Log output" and "Ping-pong" to that namespace
+
+[->](./manifests/)
+
+```Yaml
+metadata:
+  name: ..
+  namespace: exercises
+```
