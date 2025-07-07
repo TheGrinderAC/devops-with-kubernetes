@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 });
 
 // Helper function to serve cached image
-async function serveImage(res) {
+function serveImage(res) {
   try {
     const imageBuffer = fs.readFileSync(IMAGE_PATH);
     res.set("Content-Type", "image/jpeg");
@@ -97,6 +97,52 @@ app.get("/", (req, res) => {
           .refresh-btn:hover {
             background-color: #0056b3;
           }
+          .todo-container {
+            margin-top: 30px;
+          }
+          .todo-container h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+          }
+          .todo-container form {
+            display: flex;
+            margin-bottom: 20px;
+          }
+          .todo-container input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+          }
+          .todo-container button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+          }
+          .todo-container button:hover {
+            background-color: #218838;
+          }
+          .todo-list {
+            list-style-type: none;
+            padding: 0;
+          }
+          .todo-list li {
+            background-color: #fff;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 18px;
+          }
+          .todo-list li:last-child {
+            border-bottom: none;
+          }
         </style>
       </head>
       <body>
@@ -108,6 +154,27 @@ app.get("/", (req, res) => {
           </div>
           
           <p class="subtitle">DevOps with Kubernetes 2025</p>
+
+          <div class="todo-container">
+            <h2>My Todos</h2>
+            <form action="/todos" method="post">
+              <input type="text" name="todo" placeholder="Add a new todo..." maxlength="140">
+              <button type="submit">Send</button>
+            </form>
+            <ul class="todo-list">
+              <!-- Todos will be rendered here -->
+            </ul>
+          </div>
+
+          <script>
+            fetch('/todos')
+              .then(response => response.json())
+              .then(todos => {
+                const todoList = document.querySelector('.todo-list');
+                todoList.innerHTML = todos.map(todo => \`<li>\${todo}</li>\`).join('');
+              })
+              .catch(error => console.error('Error fetching todos:', error));
+          </script>
         
         </div>
       </body>
@@ -165,6 +232,33 @@ app.get("/image", async (req, res) => {
 
     // No cache available, return error
     res.status(500).send("Error fetching image and no cache available");
+  }
+});
+
+app.get("/todos", async (req, res) => {
+  try {
+    // Use the backend service for todos, fallback to local if not available
+    const backendUrl =
+      process.env.TODO_BACKEND_URL || "http://todo-backend-svc:3001/todos";
+    const response = await axios.get(backendUrl);
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching todos:", error);
+    res.status(500).json({ error: "Failed to fetch todos" });
+  }
+});
+
+app.post("/todos", async (req, res) => {
+  try {
+    const backendUrl =
+      process.env.TODO_BACKEND_URL || "http://todo-backend-svc:3001/todos";
+    await axios.post(backendUrl, {
+      todo: req.body.todo,
+    });
+    res.redirect("/");
+  } catch (error) {
+    console.error("Error creating todo:", error);
+    res.status(500).json({ error: "Failed to create todo" });
   }
 });
 
