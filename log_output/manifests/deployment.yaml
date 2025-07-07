@@ -12,15 +12,15 @@ spec:
       labels:
         app: logoutput
     spec:
-      volumes:
-        - name: shared-logs
-          persistentVolumeClaim:
-            claimName: shared-logs-pvc
+      # volumes:
+      #   - name: shared-logs
+      #     persistentVolumeClaim:
+      #       claimName: shared-logs-pvc
       containers:
-        - name: reader
-          image: bidhe1/log_output_reader:latest
+        - name: log-output
+          image: bidhe1/log_output:latest
           ports:
             - containerPort: 3000
-          volumeMounts:
-            - name: shared-logs
-              mountPath: /app/logs
+          # volumeMounts:
+          #   - name: shared-logs
+          #     mountPath: /app/logs

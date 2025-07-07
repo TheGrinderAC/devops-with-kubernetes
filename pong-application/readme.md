@@ -1,3 +1,3 @@
-# 1.9. More services
+# 2.1. Connecting pods
 
-Added deployment and service to work with log_output's ingress [->here](../log_output/manifests/ingress.yaml)
+Removed Volume sharing, Instead it use service based internal [networking](../log_output/readme.md) with log_output
