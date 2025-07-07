@@ -1,10 +1,9 @@
-2.2. The project, step 8
+# 2.4. The project, step 9
 
-> [todo-backend](../todo-backend/), has a GET /todos endpoint for fetching the list of todos and a POST /todos endpoint for creating a new todo. The todos can be saved in memory.
+> moved everything related to the project todo app to the [project](./manifests/) namespace!
 
-```js
-const backendUrl = "http://todo-backend-svc:3001/todos";
+> [todo app](.) & [todo_backend](../todo-backend/)
+
+```yaml
+namespace: project
 ```
-
-created todos rendered in the browser
-![img](./image.png)
