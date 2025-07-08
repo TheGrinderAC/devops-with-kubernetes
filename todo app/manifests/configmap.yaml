@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: project
+data:
+  PORT: "3000"
+  IMAGE_DIR: "/app/storage"
+  IMAGE_NAME: "image.jpg"
+  CACHE_TIMEOUT: "600000"
+  IMAGE_API_URL: "https://picsum.photos/1200"
+  TODO_BACKEND_URL: "http://todo-backend-svc:3001/todos"

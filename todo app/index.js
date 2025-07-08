@@ -4,12 +4,13 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 // Image caching configuration
-const IMAGE_DIR = path.join(__dirname, "storage");
-const IMAGE_PATH = path.join(IMAGE_DIR, "image.jpg");
-const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
+const IMAGE_DIR = process.env.IMAGE_DIR;
+const IMAGE_NAME = process.env.IMAGE_NAME;
+const IMAGE_PATH = path.join(IMAGE_DIR, IMAGE_NAME);
+const CACHE_TIMEOUT = process.env.CACHE_TIMEOUT;
 
 // Create storage directory if it doesn't exist
 if (!fs.existsSync(IMAGE_DIR)) {
@@ -40,13 +41,16 @@ function serveImage(res) {
   }
 }
 
+const APP_TITLE = "The project App";
+const APP_SUBTITLE = "DevOps with Kubernetes 2025";
+
 // Updated main route with image display
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html>
       <head>
-        <title>The project App</title>
+        <title>${APP_TITLE}</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
@@ -147,13 +151,13 @@ app.get("/", (req, res) => {
       </head>
       <body>
         <div class="container">
-          <h1>The project App</h1>
+          <h1>${APP_TITLE}</h1>
           
           <div class="image-container">
             <img src="/image" alt="Random Project Image" class="main-image">
           </div>
           
-          <p class="subtitle">DevOps with Kubernetes 2025</p>
+          <p class="subtitle">${APP_SUBTITLE}</p>
 
           <div class="todo-container">
             <h2>My Todos</h2>
@@ -182,6 +186,8 @@ app.get("/", (req, res) => {
   `);
 });
 
+const IMAGE_API_URL = process.env.IMAGE_API_URL;
+
 // Image endpoint with intelligent caching
 app.get("/image", async (req, res) => {
   const now = Date.now();
@@ -195,13 +201,13 @@ app.get("/image", async (req, res) => {
   }
 
   // Step 2: Check Cache Validity (serve if image is fresh)
-  if (stats && now - stats.mtimeMs < TEN_MINUTES_IN_MS) {
+  if (stats && now - stats.mtimeMs < CACHE_TIMEOUT) {
     console.log("✅ Serving cached image (fresh)");
     return serveImage(res);
   }
 
   // Step 3: Rate Limiting Logic (prevent API spam)
-  if (now - lastRequestTime < TEN_MINUTES_IN_MS && stats) {
+  if (now - lastRequestTime < CACHE_TIMEOUT && stats) {
     console.log("⏰ Serving cached image (rate limited)");
     lastRequestTime = now;
     return serveImage(res);
@@ -209,8 +215,8 @@ app.get("/image", async (req, res) => {
 
   // Step 4: Fetch new image from external API
   try {
-    console.log("🌐 Fetching new image from Picsum...");
-    const response = await axios.get("https://picsum.photos/1200", {
+    console.log(`🌐 Fetching new image from ${IMAGE_API_URL}...`);
+    const response = await axios.get(IMAGE_API_URL, {
       responseType: "arraybuffer",
     });
 
@@ -235,12 +241,12 @@ app.get("/image", async (req, res) => {
   }
 });
 
+const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL;
+
 app.get("/todos", async (req, res) => {
   try {
     // Use the backend service for todos, fallback to local if not available
-    const backendUrl =
-      process.env.TODO_BACKEND_URL || "http://todo-backend-svc:3001/todos";
-    const response = await axios.get(backendUrl);
+    const response = await axios.get(TODO_BACKEND_URL);
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching todos:", error);
@@ -250,9 +256,7 @@ app.get("/todos", async (req, res) => {
 
 app.post("/todos", async (req, res) => {
   try {
-    const backendUrl =
-      process.env.TODO_BACKEND_URL || "http://todo-backend-svc:3001/todos";
-    await axios.post(backendUrl, {
+    await axios.post(TODO_BACKEND_URL, {
       todo: req.body.todo,
     });
     res.redirect("/");

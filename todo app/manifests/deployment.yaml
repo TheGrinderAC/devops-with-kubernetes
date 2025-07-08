@@ -16,9 +16,17 @@ spec:
       containers:
         - name: todoapp
           image: bidhe1/todo_app:latest
+          envFrom:
+            - configMapRef:
+                name: app-config
           volumeMounts:
             - name: image-cache
               mountPath: /app/storage
+            - name: config-volume
+              mountPath: /app/config
       volumes:
         - name: image-cache
           emptyDir: {}
+        - name: config-volume
+          configMap:
+            name: app-config

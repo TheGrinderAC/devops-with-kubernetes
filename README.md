@@ -23,3 +23,4 @@
 - [2.3](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.3/log_output)
 - [2.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.4/todo%20app)
 - [2.5](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.5/log_output)
+- [2.6](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.6/todo%20app)
