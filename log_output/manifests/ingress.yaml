@@ -21,3 +21,10 @@ spec:
                 name: pong-application-svc
                 port:
                   number: 2345
+          - path: /adminer
+            pathType: Prefix
+            backend:
+              service:
+                name: adminer-service
+                port:
+                  number: 3456

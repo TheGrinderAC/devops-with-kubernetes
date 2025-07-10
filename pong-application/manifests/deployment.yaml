@@ -13,15 +13,22 @@ spec:
       labels:
         app: pong-application
     spec:
-      # volumes:
-      #   - name: shared-logs
-      #     persistentVolumeClaim:
-      #       claimName: shared-logs-pvc
       containers:
         - name: pong-application
           image: bidhe1/pong_application:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
-          # volumeMounts:
-          #   - name: shared-logs
-          #     mountPath: /app/logs
+          env:
+            - name: POSTGRES_HOST
+              value: postgres-service
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD

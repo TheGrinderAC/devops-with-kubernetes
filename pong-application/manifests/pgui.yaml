@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: adminer
+  namespace: exercises
+  labels:
+    app: adminer
+spec:
+  containers:
+    - name: adminer
+      image: adminer
+      ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adminer-service
+  namespace: exercises
+spec:
+  selector:
+    app: adminer
+  ports:
+    - port: 3456
+      protocol: TCP
+      targetPort: 8080

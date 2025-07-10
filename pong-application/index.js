@@ -1,19 +1,37 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const { Client } = require("pg");
 
 const app = express();
-// const logFilePath = path.join("/app/logs", "output.log");
 
-let pongCount = 0;
+const client = new Client({
+  host: process.env.POSTGRES_HOST,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  database: "postgres",
+});
+//postgresql://postgres:postgres@postgres-service:5432/postgres
 
-app.get("/pingpong", (req, res) => {
-  pongCount += 1;
-  res.send(`pong ${pongCount}`);
+client.connect().then(() => {
+  console.log("Connected to PostgreSQL");
+  client.query(`
+    CREATE TABLE IF NOT EXISTS pongs (
+      id SERIAL PRIMARY KEY,
+      count INTEGER
+    );
+  `);
 });
 
-app.get("/pong-count", (req, res) => {
-  res.json({ count: pongCount });
+app.get("/pingpong", async (req, res) => {
+  const result = await client.query(
+    "INSERT INTO pongs (count) VALUES (1) RETURNING count"
+  );
+  const currentCount = await client.query("SELECT COUNT(*) FROM pongs");
+  res.send(`pong ${currentCount.rows[0].count}`);
+});
+
+app.get("/pong-count", async (req, res) => {
+  const result = await client.query("SELECT COUNT(*) FROM pongs");
+  res.json({ count: parseInt(result.rows[0].count) });
 });
 
 const PORT = process.env.PORT || 3000;
