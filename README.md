@@ -25,3 +25,4 @@
 - [2.5](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.5/log_output)
 - [2.6](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.6/todo%20app)
 - [2.7](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.7/pong-application)
+- [2.8](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.8/todo-backend)

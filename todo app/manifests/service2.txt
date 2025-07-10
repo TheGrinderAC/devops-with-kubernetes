@@ -14,3 +14,5 @@ spec:
       imagePullPolicy: IfNotPresent
       name: busybox
   restartPolicy: Always
+
+# make it yaml when needed for debug
