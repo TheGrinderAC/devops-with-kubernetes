@@ -4,7 +4,7 @@
 
 ### Exercises
 
-### Chapter 2:
+> - Chapter 2:
 
 - [1.1](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.1/log_output)
 - [1.2](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.2/todo%20app)
@@ -18,6 +18,9 @@
 - [1.10](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.10/log_output)
 - [1.11](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.11/log_output)
 - [1.12](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/1.12/todo%20app)
+
+> - Chapter 3
+
 - [2.1](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.1/log_output)
 - [2.2](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.2/todo%20app)
 - [2.3](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/2.3/log_output)
