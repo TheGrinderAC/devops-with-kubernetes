@@ -244,24 +244,56 @@ app.get("/image", async (req, res) => {
 const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL;
 
 app.get("/todos", async (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Frontend: Fetching todos from backend`);
+
   try {
     // Use the backend service for todos, fallback to local if not available
     const response = await axios.get(TODO_BACKEND_URL);
+    console.log(
+      `[${timestamp}] Frontend: Successfully fetched ${response.data.length} todos from backend`
+    );
     res.json(response.data);
   } catch (error) {
-    console.error("Error fetching todos:", error);
+    console.error(
+      `[${timestamp}] Frontend: Error fetching todos:`,
+      error.message
+    );
     res.status(500).json({ error: "Failed to fetch todos" });
   }
 });
 
 app.post("/todos", async (req, res) => {
+  const timestamp = new Date().toISOString();
+  const todoContent = req.body.todo;
+
+  console.log(
+    `[${timestamp}] Frontend: Sending todo to backend (${todoContent.length} chars)`
+  );
+
   try {
-    await axios.post(TODO_BACKEND_URL, {
-      todo: req.body.todo,
+    const response = await axios.post(TODO_BACKEND_URL, {
+      todo: todoContent,
     });
+    console.log(`[${timestamp}] Frontend: Todo successfully sent to backend`);
     res.redirect("/");
   } catch (error) {
-    console.error("Error creating todo:", error);
+    console.error(
+      `[${timestamp}] Frontend: Error creating todo:`,
+      error.response?.data || error.message
+    );
+
+    // Handle backend validation errors
+    if (error.response?.status === 400) {
+      const errorData = error.response.data;
+      console.log(
+        `[${timestamp}] Frontend: Backend validation error - ${
+          errorData.message || errorData.error
+        }`
+      );
+      return res.status(400).json(errorData);
+    }
+
     res.status(500).json({ error: "Failed to create todo" });
   }
 });

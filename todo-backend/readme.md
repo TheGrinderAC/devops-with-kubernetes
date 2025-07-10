@@ -1,25 +1,47 @@
-# 2.9 The project, step 12
+# 2.10. The project, step 13
 
-> Created a CronJob that generates a new todo every hour to reminds to do 'Read <URL>', here <URL> is a Wikipedia article that was decided by the job randomly.
+> - Created Kubernetes Monitoring Setup
 
-> Pulled a curl container and that adds todo via todo-backend service(http://todo-backend-svc.project:3001/todos )
+Added request logging so that you can monitor every todo that is sent to the backend.
+Set the limit of 140 characters for todos into the backend as well. Used curl to test that too long todos are blocked by the backend and you can see the non-allowed messages in your Grafana.
 
-```yaml
-..
-spec:
-  schedule: "0 * * * *" # Hourly schedule
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: wikipedia-todo-creator
-              image: curlimages/curl:latest
-              command: ["/bin/sh", "-c"]
-              args:
-                - |
-                  URL=$(curl -sLI -o /dev/null -w '%{url_effective}' https://en.wikipedia.org/wiki/Special:Random)
-                  echo "Adding todo: Read $URL"
-                  curl http://todo-backend-svc.project:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
-          restartPolicy: OnFailure
+Step 1: Install Helm Repositories
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
 ```
+
+Step 2: Install kube-prometheus-stack (Latest Version)
+
+```bash
+kubectl create namespace monitoring
+
+# Install latest kube-prometheus-stack
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+```
+
+Step 3: Access Grafana
+
+```bash
+# Get Grafana admin password(using ps)
+$encodedPassword = kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}"
+
+# Port forward to access Grafana
+kubectl port-forward --namespace monitoring svc/kube-promethe
+us-stack-grafana 3000:80
+```
+
+Step 4: Installed Lightweight Setup (Loki 2.9.3 )
+
+```bash
+kubectl create namespace loki-stack
+
+helm upgrade --install loki --namespace=loki-stack grafana/loki-stack --set loki.image.tag=2.9.3
+```
+
+> Finally applied the manifests appropriately and run the localhost 3000 with username admin and password got from the cmd and see the logs of backend of todo application :
+
+![img](./image.png)

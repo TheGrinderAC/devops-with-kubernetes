@@ -9,6 +9,19 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+
+  // Log request body for POST requests
+  if (req.method === "POST" && req.body) {
+    console.log(`[${timestamp}] Request body:`, JSON.stringify(req.body));
+  }
+
+  next();
+});
+
 // Setup PostgreSQL connection pool
 const pool = new Pool({
   user: process.env.POSTGRES_USER,
@@ -41,8 +54,17 @@ app.get("/todos", async (req, res) => {
     );
     // Return only the todo text as an array of strings for frontend compatibility
     const todos = result.rows.map((row) => row.todo);
+    console.log(
+      `[${new Date().toISOString()}] GET /todos - Retrieved ${
+        todos.length
+      } todos`
+    );
     res.json(todos);
   } catch (err) {
+    console.error(
+      `[${new Date().toISOString()}] GET /todos - Error:`,
+      err.message
+    );
     res.status(500).json({ error: "Failed to fetch todos" });
   }
 });
@@ -50,17 +72,44 @@ app.get("/todos", async (req, res) => {
 // Add a new todo
 app.post("/todos", async (req, res) => {
   const { todo } = req.body;
+  const timestamp = new Date().toISOString();
+
+  // Validate todo content
   if (!todo) {
+    console.log(
+      `[${timestamp}] POST /todos - REJECTED: Todo content is missing`
+    );
     return res.status(400).json({ error: "Todo content is missing" });
   }
+
+  // Check character limit
+  if (todo.length > 140) {
+    console.log(
+      `[${timestamp}] POST /todos - REJECTED: Todo too long (${todo.length} chars, max 140)`
+    );
+    return res.status(400).json({
+      error: "Todo too long",
+      message: `Todo must be 140 characters or less. Current length: ${todo.length}`,
+      maxLength: 140,
+      currentLength: todo.length,
+    });
+  }
+
   try {
     const result = await pool.query(
       "INSERT INTO todos (todo) VALUES ($1) RETURNING id, todo",
       [todo]
     );
+    console.log(
+      `[${timestamp}] POST /todos - ACCEPTED: Todo added successfully (${todo.length} chars)`
+    );
     // Return only the todo text for consistency
     res.status(201).json(result.rows[0].todo);
   } catch (err) {
+    console.error(
+      `[${timestamp}] POST /todos - ERROR: Database error:`,
+      err.message
+    );
     res.status(500).json({ error: "Failed to add todo" });
   }
 });
