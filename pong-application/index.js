@@ -21,7 +21,10 @@ client.connect().then(() => {
   `);
 });
 
+// Root endpoint - increments counter (this is what /pingpong will be rewritten to)
 app.get("/", async (req, res) => {
+  console.log("Ping received! Responding with pong and incrementing counter.");
+
   const result = await client.query(
     "INSERT INTO pongs (count) VALUES (1) RETURNING count"
   );
@@ -29,7 +32,10 @@ app.get("/", async (req, res) => {
   res.send(`pong ${currentCount.rows[0].count}`);
 });
 
+// Separate endpoint for just getting the count (no increment)
 app.get("/pong-count", async (req, res) => {
+  console.log("Count requested - not incrementing");
+
   const result = await client.query("SELECT COUNT(*) FROM pongs");
   res.json({ count: parseInt(result.rows[0].count) });
 });
