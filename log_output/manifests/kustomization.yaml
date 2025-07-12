@@ -3,5 +3,6 @@ kind: Kustomization
 resources:
   - configmap.yaml
   - deployment.yaml
-  - ingress.yaml
-  - nodeport.yaml
+  - gateway.yaml
+  - routes.yaml
+  - service.yaml

@@ -4,7 +4,7 @@ metadata:
   name: pong-application-svc
   namespace: exercises
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: pong-application
   ports:
