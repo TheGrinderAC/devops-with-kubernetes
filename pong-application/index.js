@@ -21,11 +21,7 @@ client.connect().then(() => {
   `);
 });
 
-app.get("/", (req, res) => {
-  res.status(200).send("ok");
-});
-
-app.get("/pingpong", async (req, res) => {
+app.get("/", async (req, res) => {
   const result = await client.query(
     "INSERT INTO pongs (count) VALUES (1) RETURNING count"
   );

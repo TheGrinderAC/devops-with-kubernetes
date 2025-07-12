@@ -1,23 +1,52 @@
-# 3.3. To the Gateway
+# 3.4. Rewritten routing
 
-> Replaced the Ingress with Gateway API in this log_output application.
-
-[gateway](./manifests/gateway.yaml), [routes](./manifests/routes.yaml), [service](./manifests/service.yaml)
-
-- The gateway just defines where and how the load balancers listen for traffic,
-  The routing rules can be defined with HTTPRoute resources & also Service port type has to be ClusterIP.
-
-```sh
- $ kubectl apply -k  manifests
-```
+> 1. chnge this route to root path / in the [pong-application](../pong-application/), cause we were not forced to reflect the cluster-level URL structures in the applications, and instead the app itself could provide the behavior in the root path /. Thanks to the flexibility of the Gateway API, this can be easily done by route rewriting.
 
 ```js
-$ kubectl get gateway log-gateway  -n  exercises
+-- app.get("/pingpong", async (req, res) => {
 
-NAME          CLASS                            ADDRESS        PROGRAMMED   AGE
-log-gateway   gke-l7-global-external-managed   34.8.122.249   True         26m
-
+++ app.get("/", async (req, res) => {
+  const result = await client.query(
+    "INSERT INTO pongs (count) VALUES (1) RETURNING count"
+  );
+  const currentCount = await client.query("SELECT COUNT(*) FROM pongs");
+  res.send(`pong ${currentCount.rows[0].count}`);
+});
 ```
 
-- EnteryPonit-> http://34.8.122.249/
-  ![img](./image.png)
+Chnaged in the routes.yaml for http rewrites:
+
+```yaml
+---
+spec:
+  parentRefs:
+    - name: log-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: log-output-svc
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /pingpong
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: pong-application-svc
+          port: 2345
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /pong-count # no rewrite just go to pong-application-svc's /pong-count that exits already!
+      backendRefs:
+        - name: pong-application-svc
+          port: 2345
+```
