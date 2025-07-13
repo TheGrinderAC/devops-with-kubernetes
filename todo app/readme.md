@@ -45,3 +45,11 @@ spec:
 
   ....more
 ```
+
+```bash
+kubectl get ing -n project
+NAME               CLASS    HOSTS   ADDRESS         PORTS   AGE
+todo-app-ingress   <none>   *       34.144.209.36   80      33m
+```
+
+Enterypoint: http://34.144.209.36
