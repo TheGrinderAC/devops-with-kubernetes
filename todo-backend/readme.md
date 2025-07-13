@@ -1,47 +1,81 @@
-# 2.10. The project, step 13
+# 3.5. The project, step 14
 
-> - Created Kubernetes Monitoring Setup
+> Configured both projects to use Kustomize, and deployed it to Google Kubernetes Engine.
 
-Added request logging so that you can monitor every todo that is sent to the backend.
-Set the limit of 140 characters for todos into the backend as well. Used curl to test that too long todos are blocked by the backend and you can see the non-allowed messages in your Grafana.
+```js
+$ kubectl kustomize .
 
-Step 1: Install Helm Repositories
+...
 
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRES_PASSWORD
+              name: postgres-secret
+        image: bidhe1/todo-backend:latest
+        imagePullPolicy: Always
+        name: todo-backend
+        ports:
+        - containerPort: 3001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: project
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  serviceName: postgres-service
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: postgres-secret
+        image: postgres
+        name: postgres
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: random-wikipedia-todo-cronjob
+  namespace: project
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - args:
+            - |
+              URL=$(curl -sLI -o /dev/null -w '%{url_effective}' https://en.wikipedia.org/wiki/Special:Random)
+              echo "Adding todo: Read $URL"
+              curl http://todo-backend-svc.project:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
+            command:
+            - /bin/sh
+            - -c
+            image: curlimages/curl:latest
+            name: wikipedia-todo-creator
+          restartPolicy: OnFailure
+  schedule: 0 * * * *
 ```
-
-Step 2: Install kube-prometheus-stack (Latest Version)
-
-```bash
-kubectl create namespace monitoring
-
-# Install latest kube-prometheus-stack
-helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-```
-
-Step 3: Access Grafana
-
-```bash
-# Get Grafana admin password(using ps)
-$encodedPassword = kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}"
-
-# Port forward to access Grafana
-kubectl port-forward --namespace monitoring svc/kube-promethe
-us-stack-grafana 3000:80
-```
-
-Step 4: Installed Lightweight Setup (Loki 2.9.3 )
-
-```bash
-kubectl create namespace loki-stack
-
-helm upgrade --install loki --namespace=loki-stack grafana/loki-stack --set loki.image.tag=2.9.3
-```
-
-> Finally applied the manifests appropriately and run the localhost 3000 with username admin and password got from the cmd and see the logs of backend of todo application :
-
-![img](./image.png)

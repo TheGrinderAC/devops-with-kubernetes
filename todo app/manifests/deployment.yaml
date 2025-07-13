@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todoapp
-          image: bidhe1/todo_app:latest
+          image: todo_app/IMAGE
           envFrom:
             - configMapRef:
                 name: app-config

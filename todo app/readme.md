@@ -1,41 +1,47 @@
-# 2.6. The project, step 10
+# 3.5. The project, step 14
 
-> [project](.) has no hard coded ports, URL or other configurations in the source code.!
+- & [3.5(ii) todo_backend](../todo-backend/)
 
-- [configmap](./manifests/configmap.yaml)
+> Configured both projects to use Kustomize, and deployed it to Google Kubernetes Engine.
 
-```yaml
-..
+```js
+$ kubectl kustomize .
+
+apiVersion: v1
 data:
-  PORT: "3000"
-  IMAGE_DIR: "/app/storage"
-  IMAGE_NAME: "image.jpg"
   CACHE_TIMEOUT: "600000"
-  IMAGE_API_URL: "https://picsum.photos/1200"
-  TODO_BACKEND_URL: "http://todo-backend-svc:3001/todos"
+  IMAGE_API_URL: https://picsum.photos/1200
+  IMAGE_DIR: /app/storage
+  IMAGE_NAME: image.jpg
+  PORT: "3000"
+  TODO_BACKEND_URL: http://todo-backend-svc:3001/todos
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: project
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-svc
+  namespace: project
+spec:
+  ports:
+  - port: 1235
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: todoapp
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  namespace: project
+spec:
+  replicas: 1
+  selector:
 
-```
-
-- [Deployment](./manifests/deployment.yaml)
-
-```yaml
-..
-    spec:
-      containers:
-        - name: todoapp
-          image: bidhe1/todo_app:latest
-          envFrom:
-            - configMapRef:
-                name: app-config
-          volumeMounts:
-            - name: image-cache
-              mountPath: /app/storage
-            - name: config-volume
-              mountPath: /app/config
-      volumes:
-        - name: image-cache
-          emptyDir: {}
-        - name: config-volume
-          configMap:
-            name: app-config
+  ....more
 ```
