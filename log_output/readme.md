@@ -42,11 +42,4 @@ spec:
       backendRefs:
         - name: pong-application-svc
           port: 2345
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /pong-count # no rewrite just go to pong-application-svc's /pong-count that exits already!
-      backendRefs:
-        - name: pong-application-svc
-          port: 2345
 ```
