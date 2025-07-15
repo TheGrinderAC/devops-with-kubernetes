@@ -86,9 +86,9 @@ jobs:
           kustomize build . | kubectl apply -f -
           # Wait for deployment to exist before checking rollout status
           for i in {1..10}; do
-            kubectl get deployment $SERVICE && break
+            kubectl get deployment $SERVICE -n project && break
             echo "Waiting for deployment to be created..."
             sleep 5
           done
-          kubectl rollout status deployment $SERVICE
-          kubectl get services -o wide
+          kubectl rollout status deployment $SERVICE -n project
+          kubectl get services -n project -o wide
