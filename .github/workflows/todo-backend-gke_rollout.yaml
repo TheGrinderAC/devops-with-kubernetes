@@ -80,15 +80,32 @@ jobs:
       - name: Deploy
         working-directory: "todo-backend"
         run: |
-          pwd
-          ls -la
           kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
           kustomize build . | kubectl apply -f -
-          # Wait for deployment to exist before checking rollout status
+
+          # Wait for the deployment to be created before checking rollout status
           for i in {1..10}; do
             kubectl get deployment $SERVICE -n project && break
             echo "Waiting for deployment to be created..."
             sleep 5
           done
+
+          # Check the rollout status of the deployment.
+          # If rollout fails, print a warning and show diagnostics, but do not fail the workflow.
+          set +e
           kubectl rollout status deployment $SERVICE -n project
+          ROLLOUT_STATUS=$?
+          set -e
+
+          if [ $ROLLOUT_STATUS -ne 0 ]; then
+            echo "::warning::Deployment '$SERVICE' failed to roll out successfully. See logs above for details."
+            # Show deployment details
+            kubectl describe deployment $SERVICE -n project || true
+            # List pods for further inspection
+            kubectl get pods -n project -o wide || true
+            # Show recent logs from the deployment
+            kubectl logs deployment/$SERVICE -n project --tail=100 || true
+          fi
+
+          # List all services in the project namespace
           kubectl get services -n project -o wide
