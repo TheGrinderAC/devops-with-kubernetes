@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: CronJob # if it is job then it will run once only, CronJob schedules and runs jobs periodically
 metadata:
   name: random-wikipedia-todo-cronjob
-  namespace: project
 spec:
   schedule: "0 * * * *" # Hourly schedule
   jobTemplate:
@@ -17,7 +16,7 @@ spec:
                 - |
                   URL=$(curl -sLI -o /dev/null -w '%{url_effective}' https://en.wikipedia.org/wiki/Special:Random)
                   echo "Adding todo: Read $URL"
-                  curl http://todo-backend-svc.project:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
+                  curl http://todo-backend-svc:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
           restartPolicy: OnFailure
 #
 #

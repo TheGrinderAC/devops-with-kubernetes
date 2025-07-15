@@ -80,12 +80,21 @@ jobs:
       - name: Deploy
         working-directory: "todo-backend"
         run: |
+          if [ "$BRANCH" == "main" ]; then
+            NAMESPACE="project"
+          else
+            NAMESPACE="$BRANCH"
+            echo "Deploying to namespace: $NAMESPACE"
+            kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+          fi
+
           kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
+          kustomize edit set namespace $NAMESPACE
           kustomize build . | kubectl apply -f -
 
           # Wait for the deployment to be created before checking rollout status
           for i in {1..10}; do
-            kubectl get deployment $SERVICE -n project && break
+            kubectl get deployment $SERVICE -n $NAMESPACE && break
             echo "Waiting for deployment to be created..."
             sleep 5
           done
@@ -93,19 +102,19 @@ jobs:
           # Check the rollout status of the deployment.
           # If rollout fails, print a warning and show diagnostics, but do not fail the workflow.
           set +e
-          kubectl rollout status deployment $SERVICE -n project
+          kubectl rollout status deployment $SERVICE -n $NAMESPACE
           ROLLOUT_STATUS=$?
           set -e
 
           if [ $ROLLOUT_STATUS -ne 0 ]; then
             echo "::warning::Deployment '$SERVICE' failed to roll out successfully. See logs above for details."
             # Show deployment details
-            kubectl describe deployment $SERVICE -n project || true
+            kubectl describe deployment $SERVICE -n $NAMESPACE || true
             # List pods for further inspection
-            kubectl get pods -n project -o wide || true
+            kubectl get pods -n $NAMESPACE -o wide || true
             # Show recent logs from the deployment
-            kubectl logs deployment/$SERVICE -n project --tail=100 || true
+            kubectl logs deployment/$SERVICE -n $NAMESPACE --tail=100 || true
           fi
 
           # List all services in the project namespace
-          kubectl get services -n project -o wide
+          kubectl get services -n $NAMESPACE -o wide
