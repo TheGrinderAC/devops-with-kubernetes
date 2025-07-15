@@ -9,4 +9,4 @@ resources:
 
 images:
   - name: todo_backend/IMAGE
-    newName: placeholder #bidhe1/todo-backend:latest
+    newName: placeholder #bidhe1/todo-backend:latest ok
