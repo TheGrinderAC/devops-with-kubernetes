@@ -40,3 +40,4 @@
 - [3.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/3.4/log_output)
 - [3.5](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/3.5/todo%20app)
 - [3.6](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/3.6/todo%20app)
+- [3.7](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/3.7/todo%20app)
