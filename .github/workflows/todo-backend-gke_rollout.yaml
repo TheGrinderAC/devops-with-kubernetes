@@ -79,7 +79,8 @@ jobs:
       # Step 11: Deploy to GKE
       - name: Deploy
         run: |-
+          cd "todo-backend"
           kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
-          kustomize build "todo-backend" | kubectl apply -f -
+          kustomize build . | kubectl apply -f -
           kubectl rollout status deployment $SERVICE
           kubectl get services -o wide
