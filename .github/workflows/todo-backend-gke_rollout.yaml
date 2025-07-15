@@ -11,8 +11,8 @@ env:
   GKE_ZONE: us-central1-a
   REGISTRY: us-central1-docker.pkg.dev
   REPOSITORY: my-repository
-  IMAGE: todo-app
-  SERVICE: todo-app
+  IMAGE: todo-backend
+  SERVICE: todo-backend-dep
   BRANCH: ${{ github.ref_name }}
 
 # PROJECT_ID: My Google Cloud project ID (from secrets)
@@ -66,7 +66,7 @@ jobs:
 
       # Step 8: Build the Docker image
       - name: Build
-        run: docker build --tag $IMAGE_TAG todo-backend\Dockerfile
+        run: docker build --tag $IMAGE_TAG ~/todo-backend
 
       # Step 9: Push the image to Artifact Registry
       - name: Publish
