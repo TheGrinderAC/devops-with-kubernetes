@@ -84,5 +84,11 @@ jobs:
           ls -la
           kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
           kustomize build . | kubectl apply -f -
+          # Wait for deployment to exist before checking rollout status
+          for i in {1..10}; do
+            kubectl get deployment $SERVICE && break
+            echo "Waiting for deployment to be created..."
+            sleep 5
+          done
           kubectl rollout status deployment $SERVICE
           kubectl get services -o wide
