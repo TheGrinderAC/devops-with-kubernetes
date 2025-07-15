@@ -1,0 +1,85 @@
+# A complete CI/CD pipeline using GitHub Actions to automatically build, push, and deploy containerized applications to (GKE)Google Kubernetes Engine.
+
+name: Release Todo Application
+
+on:
+  push:
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: us-central1-a
+  REGISTRY: us-central1-docker.pkg.dev
+  REPOSITORY: my-repository
+  IMAGE: todo-backend
+  SERVICE: todo-backend-dep
+  BRANCH: ${{ github.ref_name }}
+
+# PROJECT_ID: My Google Cloud project ID (from secrets)
+# GKE_CLUSTER: Name of your GKE cluster
+# GKE_ZONE: Zone where your cluster is located
+# REGISTRY: Artifact Registry location(can be found in artifact registry setup instruction)
+# REPOSITORY: Name of your Docker repository
+# IMAGE: Name of your application image(my choice: This can be any name I want)
+# SERVICE: Name of your Kubernetes service (Must match deployment.yaml metadata.name)
+# BRANCH: Current git branch name
+
+jobs:
+  build-deploy-publish: # Job names should be lowercase with hyphens
+    name: Build, Deploy and Publish Todo Application
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Downloads the repository code to the runner.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Step 2: Google Cloud Authentication
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      # Step 3: Set up Google Cloud SDK
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Step 4: Verify gcloud setup
+      - name: "Use gcloud CLI"
+        run: gcloud info
+
+      # Step 5: Configure Docker to use gcloud as credential helper
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      # Step 6: Get GKE credentials(Google Kubernetes cluster to get credentials )
+      - name: "Get GKE credentials"
+        uses: "google-github-actions/get-gke-credentials@v2"
+        with:
+          cluster_name: "${{ env.GKE_CLUSTER }}"
+          project_id: "${{ env.PROJECT_ID }}"
+          location: "${{ env.GKE_ZONE }}"
+
+      # Step 7: Form the image name with registry path
+      - name: "Form the image name"
+        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+
+      # Step 8: Build the Docker image
+      - name: Build
+        run: docker build --tag $IMAGE_TAG .
+
+      # Step 9: Push the image to Artifact Registry
+      - name: Publish
+        run: docker push $IMAGE_TAG
+
+      # Step 10: Set up Kustomize
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2.1.0
+
+      # Step 11: Deploy to GKE
+      - name: Deploy
+        run: |-
+          kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
+          kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment $SERVICE
+          kubectl get services -o wide
