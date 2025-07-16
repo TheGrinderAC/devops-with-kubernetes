@@ -6,6 +6,7 @@ resources:
   - manifests/deployment.yaml
   - manifests/service.yaml
   - manifests/todo_job.yaml
+  - manifests/pg_backup.yaml
 
 images:
   - name: PROJECT/IMAGE

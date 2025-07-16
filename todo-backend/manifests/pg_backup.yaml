@@ -18,7 +18,7 @@ spec:
         spec:
           containers:
             - name: pg-backup
-              image: prodrigestivill/postgres-gcs-backup
+              image: ghcr.io/diogopms/postgres-gcs-backup:latest
               command:
                 - /bin/sh
                 - -c
