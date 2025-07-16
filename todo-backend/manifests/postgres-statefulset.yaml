@@ -35,6 +35,9 @@ spec:
           envFrom:
             - secretRef:
                 name: postgres-secret
+          env:
+            - name: POSTGRES_DB
+              value: "todo-db"
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data

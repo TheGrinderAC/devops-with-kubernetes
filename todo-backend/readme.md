@@ -1,81 +1,28 @@
-# 3.5. The project, step 14
+# 3.10. The project, step 18(DB Backup & Secrets)
 
-> Configured both projects to use Kustomize, and deployed it to Google Kubernetes Engine.
+> [Created CronJob makes a backup of the todo database every 24 hours and saves it to Google Cloud Storage.](./manifests/pg_backup.yaml)
 
-```js
-$ kubectl kustomize .
+## 1. Created the GCS service account key file
 
-...
+```bash
+$ kubectl create secret generic gcs-secret --from-file=key.json
 
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: POSTGRES_PASSWORD
-              name: postgres-secret
-        image: bidhe1/todo-backend:latest
-        imagePullPolicy: Always
-        name: todo-backend
-        ports:
-        - containerPort: 3001
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: postgres
-  namespace: project
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  serviceName: postgres-service
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-      - envFrom:
-        - secretRef:
-            name: postgres-secret
-        image: postgres
-        name: postgres
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - mountPath: /var/lib/postgresql/data
-          name: postgres-storage
-  volumeClaimTemplates:
-  - metadata:
-      name: postgres-storage
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: random-wikipedia-todo-cronjob
-  namespace: project
-spec:
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - args:
-            - |
-              URL=$(curl -sLI -o /dev/null -w '%{url_effective}' https://en.wikipedia.org/wiki/Special:Random)
-              echo "Adding todo: Read $URL"
-              curl http://todo-backend-svc.project:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
-            command:
-            - /bin/sh
-            - -c
-            image: curlimages/curl:latest
-            name: wikipedia-todo-creator
-          restartPolicy: OnFailure
-  schedule: 0 * * * *
+secret/gcs-secret created
+
+# This step creates a Kubernetes secret containing my Google Cloud Storage (GCS) service account credentials. The backup CronJob uses this secret to authenticate and upload database backups to your GCS bucket.
 ```
+
+## Backup Storage
+
+- **Location**: `gs://postgress_backup_sql/` (#bucket_name = postgress_backup_sql )
+- **Format**: `backup-YYYY-MM-DD-HH-MM-SS.sql.gz`
+- **Retention**: 30 days
+- **Compression**: gzip (typically 70-80% size reduction)
+
+# Test
+
+```sh
+kubectl create job --from=cronjob/pg-backup-cron pg-backup-manual-$(Get-Date -UFormat %s)
+```
+
+This triggers a one-time backup without waiting for the scheduled time.

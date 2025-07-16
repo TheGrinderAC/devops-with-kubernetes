@@ -4,6 +4,10 @@ name: Release Todo-Backend Application
 
 on:
   push:
+    branches:
+      - "**"
+    tags-ignore: # will not trigger when publish a new release
+      - "**"
     paths:
       - "todo-backend/**"
 env:
