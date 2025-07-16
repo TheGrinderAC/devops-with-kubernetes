@@ -4,7 +4,8 @@ name: Release Todo-Backend Application
 
 on:
   push:
-
+    paths:
+      - "todo-backend/**"
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: dwk-cluster
