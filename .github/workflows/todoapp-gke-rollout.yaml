@@ -94,11 +94,6 @@ jobs:
           kustomize edit set namespace $NAMESPACE
           kustomize build . | kubectl apply -f -
 
-          if [ "$BRANCH" != "main" ]; then
-            # Patch ingress for non-main branches to use a unique path
-            kubectl patch ingress todo-app-ingress -n $NAMESPACE --type=json -p="[{\"op\": \"replace\", \"path\": \"/spec/rules/0/http/paths/0/path\", \"value\": \"/$NAMESPACE\"}]"
-          fi
-
           # Wait for the deployment to be created before checking rollout status
           for i in {1..10}; do
             kubectl get deployment $SERVICE -n $NAMESPACE && break
@@ -107,7 +102,6 @@ jobs:
           done
 
           # Check the rollout status of the deployment.
-          # If rollout fails, print a warning and show diagnostics, but do not fail the workflow.
           set +e
           kubectl rollout status deployment $SERVICE -n $NAMESPACE
           ROLLOUT_STATUS=$?
@@ -115,13 +109,14 @@ jobs:
 
           if [ $ROLLOUT_STATUS -ne 0 ]; then
             echo "::warning::Deployment '$SERVICE' failed to roll out successfully. See logs above for details."
-            # Show deployment details
             kubectl describe deployment $SERVICE -n $NAMESPACE || true
-            # List pods for further inspection
             kubectl get pods -n $NAMESPACE -o wide || true
-            # Show recent logs from the deployment
             kubectl logs deployment/$SERVICE -n $NAMESPACE --tail=100 || true
           fi
 
-          # List all services in the project namespace
+          # List all services and ingresses in the namespace for debugging
           kubectl get services -n $NAMESPACE -o wide
+          kubectl get ingress -n $NAMESPACE -o wide
+
+          # Show the actual ingress configuration
+          kubectl describe ingress todo-app-ingress -n $NAMESPACE
