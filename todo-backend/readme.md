@@ -25,4 +25,4 @@ secret/gcs-secret created
 kubectl create job --from=cronjob/pg-backup-cron pg-backup-manual-$(Get-Date -UFormat %s)
 ```
 
-This triggers a one-time backup without waiting for the scheduled time.
+This triggers a one-time backup without waiting for the scheduled time!
