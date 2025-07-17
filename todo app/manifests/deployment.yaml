@@ -18,6 +18,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: app-config
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
           volumeMounts:
             - name: image-cache
               mountPath: /app/storage

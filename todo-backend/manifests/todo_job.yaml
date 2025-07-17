@@ -17,6 +17,13 @@ spec:
                   URL=$(curl -sLI -o /dev/null -w '%{url_effective}' https://en.wikipedia.org/wiki/Special:Random)
                   echo "Adding todo: Read $URL"
                   curl http://todo-backend-svc:3001/todos -X POST -H "Content-Type: application/json" -d "{\"todo\": \"Read $URL\"}"
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "50m"
+                limits:
+                  memory: "128Mi"
+                  cpu: "100m"
           restartPolicy: OnFailure
 #
 #

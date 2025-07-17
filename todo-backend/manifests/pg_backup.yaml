@@ -132,6 +132,13 @@ spec:
                 - name: gcs-secret
                   mountPath: "/secrets/gcs"
                   readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
           volumes:
             - name: gcs-secret
               secret:
