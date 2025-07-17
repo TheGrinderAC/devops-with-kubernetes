@@ -13,16 +13,18 @@ spec:
         spec:
           containers:
             - name: pg-backup
-              # Using Google Cloud SDK image which has gsutil preinstalled
-              image: gcr.io/google.com/cloudsdktool/google-cloud-cli:latest
+              # Using PostgreSQL 17 image which has matching client version
+              image: postgres:17-alpine
               command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
                   set -e
 
-                  # Install PostgreSQL client
-                  apt-get update && apt-get install -y postgresql-client-15
+                  # Install Google Cloud SDK
+                  apk add --no-cache curl python3 py3-pip bash
+                  curl -sSL https://sdk.cloud.google.com | bash
+                  export PATH=$PATH:/root/google-cloud-sdk/bin
 
                   # Activate service account
                   gcloud auth activate-service-account --key-file=/secrets/gcs/key.json
