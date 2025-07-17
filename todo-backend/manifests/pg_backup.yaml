@@ -22,7 +22,7 @@ spec:
                   set -e
 
                   # Install PostgreSQL client
-                  apt-get update && apt-get install -y postgresql-client-17
+                  apt-get update && apt-get install -y postgresql-client-15
 
                   # Activate service account
                   gcloud auth activate-service-account --key-file=/secrets/gcs/key.json
