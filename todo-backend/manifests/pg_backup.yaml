@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
             - name: pg-backup
-              # Using Google Cloud SDK Alpine image which includes gsutil and python
+              # Using Google Cloud SDK Alpine image which includes gsutil and python >
               image: google/cloud-sdk:alpine
               command:
                 - /bin/sh
