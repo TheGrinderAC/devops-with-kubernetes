@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
             - name: pg-backup
-              image: postgres: alpine
+              image: postgres:alpine
               command:
                 - /bin/sh
                 - -c
