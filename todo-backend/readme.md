@@ -5,7 +5,7 @@
 ## 1. Created the GCS service account key file
 
 ```bash
-$ kubectl create secret generic gcs-secret --from-file=key.json
+$ kubectl create secret generic gcs-secret --from-file=key.json -n project
 
 secret/gcs-secret created
 
