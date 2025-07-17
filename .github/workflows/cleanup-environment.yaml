@@ -1,11 +1,10 @@
 name: Cleanup Environment on Branch Deletion
 
-on:
-  delete
+on: delete
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster
+  GKE_CLUSTER: dwk-cluster2
   GKE_ZONE: us-central1-a
 
 jobs:
