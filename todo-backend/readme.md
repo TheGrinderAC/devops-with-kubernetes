@@ -27,4 +27,4 @@ $ kubectl create job --from=cronjob/pg-backup-cron pg-backup-manual-$(Get-Date -
 job.batch/pg-backup-manual-1752705709 created
 ```
 
-This triggers a one-time backup without waiting for the scheduled time!
+This triggers a one-time backup without waiting for the scheduled time!!
