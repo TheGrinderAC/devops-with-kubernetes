@@ -22,7 +22,7 @@ spec:
                   set -e
 
                   # Install Google Cloud SDK
-                  apk add --no-cache curl python3 py3-pip bash
+                  apk add --no-cache curl python3 py3-pip bash coreutils
                   curl -sSL https://sdk.cloud.google.com | bash
                   export PATH=$PATH:/root/google-cloud-sdk/bin
 
@@ -32,6 +32,37 @@ spec:
                   # Set the project (replace with your actual project ID)
                   gcloud config set project $GCP_PROJECT_ID
 
+                  # Test database connection first
+                  echo "Testing database connection..."
+                  if ! pg_isready -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME"; then
+                    echo "ERROR: Database is not ready"
+                    exit 1
+                  fi
+
+                  # Check if database exists
+                  echo "Checking if database exists..."
+                  DB_EXISTS=$(psql -h "$DB_HOST" -U "$DB_USER" -d postgres -t -c "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" 2>/dev/null || echo "")
+                  if [ -z "$DB_EXISTS" ]; then
+                    echo "ERROR: Database '$DB_NAME' does not exist"
+                    echo "Available databases:"
+                    psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "\l"
+                    exit 1
+                  fi
+
+                  # Check if database has any tables
+                  echo "Checking database contents..."
+                  psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "\dt" || echo "No tables found"
+
+                  # Get table count
+                  TABLE_COUNT=$(psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | xargs)
+                  echo "Number of tables in database: $TABLE_COUNT"
+
+                  # Warn if database is empty but continue with backup
+                  if [ "$TABLE_COUNT" = "0" ]; then
+                    echo "WARNING: Database appears to be empty (no tables found)"
+                    echo "Backup will still be created but will contain no data"
+                  fi
+
                   # Create backup with timestamp
                   BACKUP_FILE="backup-$(date +%Y-%m-%d-%H-%M-%S).sql.gz"
                   echo "Creating backup: $BACKUP_FILE"
@@ -39,8 +70,17 @@ spec:
                   # Create backup directory
                   mkdir -p /tmp/backups
 
-                  # Perform backup
-                  pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" --verbose | gzip > /tmp/backups/$BACKUP_FILE
+                  # Perform backup with more verbose output
+                  echo "Starting pg_dump..."
+                  pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" --verbose --no-password | gzip > /tmp/backups/$BACKUP_FILE
+
+                  # Check backup size
+                  BACKUP_SIZE=$(stat -c%s /tmp/backups/$BACKUP_FILE)
+                  echo "Backup file size: $BACKUP_SIZE bytes"
+
+                  # Show a sample of the backup content (first 50 lines)
+                  echo "Backup content preview:"
+                  zcat /tmp/backups/$BACKUP_FILE | head -n 50
 
                   # Upload to GCS using gsutil
                   echo "Uploading to GCS..."
@@ -49,9 +89,9 @@ spec:
                   # Verify upload
                   gsutil ls gs://$GCS_BUCKET/$BACKUP_FILE
 
-                  # Cleanup old backups (keep last 30 days)
+                  # Cleanup old backups (keep last 30 days) - Fixed date command for Alpine
                   echo "Cleaning up old backups..."
-                  CUTOFF_DATE=$(date -d '30 days ago' +%Y-%m-%d)
+                  CUTOFF_DATE=$(date -d '30 days ago' +%Y-%m-%d 2>/dev/null || date -d '@'$(($(date +%s) - 30*24*3600)) +%Y-%m-%d)
 
                   gsutil ls gs://$GCS_BUCKET/backup-*.sql.gz | while read file; do
                     # Extract date from filename
@@ -83,10 +123,7 @@ spec:
                       name: postgres-secret
                       key: POSTGRES_USER
                 - name: DB_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: postgres-secret
-                      key: POSTGRES_DB
+                  value: "postgres" #name of my database
                 - name: GCS_BUCKET
                   value: "my-unique-postgres-backup-bucket"
                 - name: GCP_PROJECT_ID
