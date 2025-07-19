@@ -30,3 +30,5 @@ readinessProbe:
   periodSeconds: 5
   failureThreshold: 3
 ```
+
+- Note: GKE Reserved Memory: ~255 MiB, so e-2 micro may run into issue with memory!
