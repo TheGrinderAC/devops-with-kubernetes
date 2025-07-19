@@ -114,6 +114,31 @@ app.post("/todos", async (req, res) => {
   }
 });
 
+// Liveness probe to check if the server is running
+app.get("/livez", (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /livez - Liveness probe`);
+  res.status(200).json({ status: "ok" });
+});
+
+// Readiness probe to check if the database connection is healthy
+app.get("/readyz", async (req, res) => {
+  const timestamp = new Date().toISOString();
+  try {
+    // A simple query to check the database connection
+    await pool.query("SELECT 1");
+    console.log(`[${timestamp}] GET /readyz - Readiness probe successful`);
+    res.status(200).json({ status: "ready" });
+  } catch (err) {
+    console.error(
+      `[${timestamp}] GET /readyz - Readiness probe failed:`,
+      err.message
+    );
+    res
+      .status(503)
+      .json({ status: "error", message: "Database connection failed" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Todo backend listening at http://localhost:${port}`);
 });

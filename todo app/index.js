@@ -298,6 +298,18 @@ app.post("/todos", async (req, res) => {
   }
 });
 
+// Health check endpoint for database connection
+app.get("/healthz", async (req, res) => {
+  try {
+    // Use the backend service for todos as a proxy for database connection
+    await axios.get(TODO_BACKEND_URL);
+    res.status(200).json({ status: "OK" });
+  } catch (error) {
+    console.error("Health check failed:", error.message);
+    res.status(500).json({ status: "error", message: "Backend not reachable" });
+  }
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({
