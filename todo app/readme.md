@@ -1,3 +1,1 @@
-## [ 3.11 in todo-backend-->](../todo-backend/)
-
-> - Cronjob for db backup here! >
+## 4.2. [The project, step 21(livenessProb+readinessProbe)](../todo-backend/)
