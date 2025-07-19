@@ -12,6 +12,21 @@ const PONG_APP_URL =
 
 const configFilePath = path.join("/app", "config", "information.txt");
 
+// Readiness probe endpoint
+app.get("/healthz", async (req, res) => {
+  try {
+    // Try to get pong count from the Ping-pong application
+    const response = await axios.get(`${PONG_APP_URL}/pong-count`);
+    if (response.data && typeof response.data.count === "number") {
+      res.status(200).send("OK");
+    } else {
+      res.status(500).send("Ping-pong application not ready");
+    }
+  } catch (err) {
+    res.status(500).send("Ping-pong application not ready");
+  }
+});
+
 app.get("/", async (req, res) => {
   try {
     // Read file content

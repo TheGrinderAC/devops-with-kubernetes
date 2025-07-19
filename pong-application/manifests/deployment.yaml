@@ -13,12 +13,27 @@ spec:
       labels:
         app: pong-application
     spec:
+      initContainers:
+        - name: check-db
+          image: postgres:9.6
+          command: [
+              "sh",
+              "-c",
+              "until pg_isready -h postgres-service -p 5432;
+              do echo waiting for database; sleep 2; done;",
+            ]
       containers:
         - name: pong-application
           image: bidhe1/pong_application:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 7
+            httpGet:
+              path: /healthz
+              port: 3000
           env:
             - name: POSTGRES_HOST
               value: postgres-service
