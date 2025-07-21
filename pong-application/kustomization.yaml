@@ -1,7 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: exercises
 resources:
   - manifests/postgres-secret.yaml
   - manifests/postgres-statefulset.yaml
-  - manifests/deployment.yaml
+  - manifests/deploymentArgo.yaml
   - manifests/service.yaml
+  - manifests/analysis-template.yaml

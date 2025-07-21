@@ -1,10 +1,25 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
-  name: pong-application
+  name: pong-application-rollout
   namespace: exercises
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    canary:
+      # Canary deployment strategy
+      steps:
+        - setWeight: 20 # Start with 20% traffic to new version
+        - pause:
+            duration: 30s # Wait 30 seconds
+        - analysis:
+            templates:
+              - templateName: ping-pong-cpu-analysis
+        - pause:
+            duration: 10s # Wait after analysis
+        - setWeight: 100 # If analysis passes, route 100% traffic
+      # Automatic rollback configuration(if fails)
+      abortScaleDownDelaySeconds: 30
   selector:
     matchLabels:
       app: pong-application
@@ -24,7 +39,7 @@ spec:
             ]
       containers:
         - name: pong-application
-          image: bidhe1/pong_application:latest
+          image: bidhe1/pong_application:v1.1
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
@@ -34,6 +49,14 @@ spec:
             httpGet:
               path: /healthz
               port: 3000
+          # Added resource limits to help with CPU monitoring
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 550m
+              memory: 256Mi
           env:
             - name: POSTGRES_HOST
               value: postgres-service

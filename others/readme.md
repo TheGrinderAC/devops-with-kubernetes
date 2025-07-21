@@ -21,7 +21,7 @@ sum(kube_pod_info{namespace="prometheus", created_by_kind="StatefulSet"})
 
 ```
 
-![image2](./image.png)
+![image2](./image2.png)
 ![img](./img.png)
 * Also tested:
 

@@ -1,53 +1,96 @@
-# 4.1. Readines probe
+# 4.4. Your canary
 
-> Create a ReadinessProbe for the Ping-pong application. It should be ready when it has a connection to the database.
+> Created an AnalysisTemplate for the Ping-pong app that will follow the CPU usage of all containers in the namespace.
 
-```yaml
-readinessProbe:
-  initialDelaySeconds: 30
-  periodSeconds: 7
-  httpGet:
-    path: /healthz
-    port: 3000
-```
-
--
+> If the CPU usage rate sum for the namespace increases above a set value within 5 minutes, revert the update.
 
 ```yaml
-spec:
-  initContainers:
-    - name: check-db
-      image: postgres:9.6
-      command: [
-          "sh",
-          "-c",
-          "until pg_isready -h postgres-service -p 5432;
-          do echo waiting for database; sleep 2; done;",
-        ]
+>> kubectl get svc -n prometheus
+NAME                                             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)
+AGE
+alertmanager-operated                            ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   62m
+kube-prometheus-stack-alertmanager               ClusterIP   34.118.228.32    <none>        9093/TCP,8080/TCP
+62m
+kube-prometheus-stack-grafana                    ClusterIP   34.118.236.173   <none>        80/TCP
+62m
+kube-prometheus-stack-kube-state-metrics         ClusterIP   34.118.234.241   <none>        8080/TCP
+62m
+kube-prometheus-stack-operator                   ClusterIP   34.118.233.133   <none>        443/TCP
+62m
+# this is the one
+kube-prometheus-stack-prometheus              ClusterIP   34.118.228.187   <none>        9090/TCP,8080/TCP
+62m
+kube-prometheus-stack-prometheus-node-exporter   ClusterIP   34.118.229.22    <none>        9100/TCP
+62m
+prometheus-operated                              ClusterIP   None             <none>        9090/TCP
 ```
 
-#### Note: I've added an initContainer to the pong-application deployment. This will ensure that the pong-application only starts after the postgres-service is available, which should resolve the "ENOTFOUND" error.
+So your internal DNS name is:( will be used in analysis-template for monitoring)
 
-> Without the initContainer, I was facing a race condition:
->
-> 1. Simultaneous Startup: Kubernetes tried to start pong-application pod and the postgres pod at the same time.
-> 2. Application Dependency: Your pong-application needs the database to be running to initialize itself correctly.
-> 3. Application Crash: The pong-application would start, immediately try to connect to the database, fail because the database wasn't ready yet, and then likely crash or enter an error state.
-> 4. Readiness Probe Fails: The readinessProbe would wait for initialDelaySeconds (30 seconds) and then start checking the /healthz endpoint. By this time, the application was already in a crashed/unhealthy state from its failed attempt to connect to the database. Therefore, the probe would fail, and Kubernetes would never mark the pod as "Ready."
->
-> The readinessProbe was correctly reporting that the application was not ready, but it couldn't solve the underlying reason why it wasn't ready—the database dependency was not met at startup.
->
-> **The Solution: The initContainer**
->
-> The initContainer solves this by enforcing a strict startup order.
->
-> 1. Block and Wait: When the pong-application pod is scheduled, Kubernetes runs the initContainer (check-db) first.
-> 2. Database Check: This container runs a simple loop: until pg_isready -h postgres-service .... This command does nothing but check if the PostgreSQL database is accepting connections. It will not exit until the check is successful.
-> 3. Guaranteed Dependency: The main pong-application container is not started until the `initContainer` completes successfully.
-> 4. Healthy Startup: By the time the pong-application container finally starts, the initContainer has guaranteed that the database is ready and waiting. The application can now connect to the database without any issues, start up correctly, and be prepared to respond to the readinessProbe.
+```yaml
+http://kube-prometheus-stack-prometheus.prometheus.svc.cluster.local:9090
+```
+
+> kubectl -n prometheus port-forward prometheus-kube-prometheus-stack-prometheus-0 9090:9090
+> Forwarding from 127.0.0.1:9090 -> 9090
+> Forwarding from [::1]:9090 -> 9090
+
+## step 1:
+
+- chnaged the default deployment rollout to [Argo Rollout Deployment](./manifests/deploymentArgo.yaml)
+- Created [analysis-template](./manifests/analysis-template.yaml)
+
+## step 2:
+
+Applied
+
+```sh
+$ kubectl create namespace argo-rollouts
+$ kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+```
 
 #
 
--
+- Note: I have already installed argo and placed that plugin file into same place where is kubectl.exe
 
-> - And added another ReadinessProbe for Log output application. It should be ready when it can receive data from the Ping-pong application.for 3.4. Rewritten routing of this app
+## step 3: Watch
+
+```yaml
+kubectl argo rollouts get rollout pong-application-rollout -n exercises --watch
+
+kubectl get analysisruns -n  exercises
+```
+
+![img](./image.png)
+
+```
+
+The 30s pause(in the deploymentARgo.yaml) BEFORE the analysis step does not impact the analysis run itself.
+
+That pause is just a delay before the analysis even starts.
+
+The Analysis step starts AFTER that 30s pause.
+
+So that 30s doesn’t count toward the count: 10, interval: 15s logic.
+
+| Step | Action          | Time             | Traffic  |
+| ---- | --------------- | ---------------- | -------- |
+| 1    | Set 20% traffic | 0s               | 20% new  |
+| 2    | Pause           | +30s             | 20% new  |
+| 3    | Run Analysis    | +150s (10 x 15s) | 20% new  |
+| 4    | Pause           | +10s             | 20% new  |
+| 5    | Set 100%        | +190s            | 100% new |
+
+1. - setWeight: 20
+2. - pause:duration: 30s
+3. -analysis:
+    templates:
+      - templateName: ping-pong-cpu-analysis
+4. - pause:
+    duration: 10s
+5. - setWeight: 100
+
+
+```
+
+![f](./final.png)

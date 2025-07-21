@@ -1,0 +1,24 @@
+# This analysis runs during the rollout step: it checks CPU usage in the "exercises" namespace 10 times at 15s intervals (total 2.5 minutes).
+# If CPU usage exceeds 0.5 cores (500m) in any check, the rollout fails and is automatically rolled back.
+# This helps catch performance regressions and prevents new versions from causing unexpected CPU spikes.
+
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: ping-pong-cpu-analysis
+  namespace: exercises
+spec:
+  metrics:
+    - name: namespace-cpu-usage
+      interval: 15s
+      count: 10
+      # Rollout fails if the threshold is exceeded in any interval
+      failureLimit: 1
+      provider:
+        prometheus:
+          # Prometheus address for querying metrics
+          address: http://kube-prometheus-stack-prometheus.prometheus.svc.cluster.local:9090
+          query: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="exercises", container!~"POD|istio-proxy|"}[5m]))
+      # Fail if CPU usage exceeds 0.5 cores (500m)
+      successCondition: result[0] <= 0.5
