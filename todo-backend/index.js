@@ -36,7 +36,8 @@ const initDb = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS todos (
       id SERIAL PRIMARY KEY,
-      todo TEXT NOT NULL
+      todo TEXT NOT NULL,
+      done BOOLEAN DEFAULT false
     );
   `);
 };
@@ -50,10 +51,9 @@ initDb().catch((err) => {
 app.get("/todos", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, todo FROM todos ORDER BY id ASC"
+      "SELECT id, todo, done FROM todos ORDER BY id ASC"
     );
-    // Return only the todo text as an array of strings for frontend compatibility
-    const todos = result.rows.map((row) => row.todo);
+    const todos = result.rows;
     console.log(
       `[${new Date().toISOString()}] GET /todos - Retrieved ${
         todos.length
@@ -97,14 +97,13 @@ app.post("/todos", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO todos (todo) VALUES ($1) RETURNING id, todo",
+      "INSERT INTO todos (todo) VALUES ($1) RETURNING id, todo, done",
       [todo]
     );
     console.log(
       `[${timestamp}] POST /todos - ACCEPTED: Todo added successfully (${todo.length} chars)`
     );
-    // Return only the todo text for consistency
-    res.status(201).json(result.rows[0].todo);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(
       `[${timestamp}] POST /todos - ERROR: Database error:`,
@@ -112,6 +111,34 @@ app.post("/todos", async (req, res) => {
     );
     res.status(500).json({ error: "Failed to add todo" });
   }
+});
+
+// Update a todo
+app.put("/todos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { done } = req.body;
+    const timestamp = new Date().toISOString();
+
+    if (typeof done !== 'boolean') {
+        return res.status(400).json({ error: 'Invalid "done" field' });
+    }
+
+    try {
+        const result = await pool.query(
+            "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, todo, done",
+            [done, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Todo not found" });
+        }
+
+        console.log(`[${timestamp}] PUT /todos/${id} - Todo updated successfully`);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(`[${timestamp}] PUT /todos/${id} - ERROR: Database error:`, err.message);
+        res.status(500).json({ error: "Failed to update todo" });
+    }
 });
 
 // Liveness probe to check if the server is running

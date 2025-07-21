@@ -143,6 +143,13 @@ app.get("/", (req, res) => {
             padding: 15px;
             border-bottom: 1px solid #eee;
             font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .todo-list li.done {
+            text-decoration: line-through;
+            color: #aaa;
           }
           .todo-list li:last-child {
             border-bottom: none;
@@ -171,11 +178,43 @@ app.get("/", (req, res) => {
           </div>
 
           <script>
+            function markAsDone(id) {
+              fetch(`/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ done: true })
+              })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Failed to mark todo as done');
+                }
+                return response.json();
+              })
+              .then(updatedTodo => {
+                const todoElement = document.querySelector(`li[data-id='${id}']`);
+                if (todoElement) {
+                  todoElement.classList.add('done');
+                  const button = todoElement.querySelector('button');
+                  if (button) {
+                    button.remove();
+                  }
+                }
+              })
+              .catch(error => console.error('Error marking todo as done:', error));
+            }
+
             fetch('/todos')
               .then(response => response.json())
               .then(todos => {
                 const todoList = document.querySelector('.todo-list');
-                todoList.innerHTML = todos.map(todo => \`<li>\${todo}</li>\`).join('');
+                todoList.innerHTML = todos.map(todo => `
+                  <li class="${todo.done ? 'done' : ''}" data-id="${todo.id}">
+                    <span>${todo.todo}</span>
+                    ${!todo.done ? `<button onclick="markAsDone(${todo.id})">Done</button>` : ''}
+                  </li>
+                `).join('');
               })
               .catch(error => console.error('Error fetching todos:', error));
           </script>
@@ -296,6 +335,24 @@ app.post("/todos", async (req, res) => {
 
     res.status(500).json({ error: "Failed to create todo" });
   }
+});
+
+app.put("/todos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { done } = req.body;
+    const timestamp = new Date().toISOString();
+
+    try {
+        const response = await axios.put(`${TODO_BACKEND_URL}/${id}`, { done });
+        console.log(`[${timestamp}] Frontend: Todo update successfully sent to backend`);
+        res.json(response.data);
+    } catch (error) {
+        console.error(
+            `[${timestamp}] Frontend: Error updating todo:`,
+            error.response?.data || error.message
+        );
+        res.status(500).json({ error: "Failed to update todo" });
+    }
 });
 
 // Health check endpoint for database connection
