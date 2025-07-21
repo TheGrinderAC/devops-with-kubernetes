@@ -179,7 +179,7 @@ app.get("/", (req, res) => {
 
           <script>
             function markAsDone(id) {
-              fetch(`/todos/${id}`, {
+              fetch('/todos/' + id, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json'
@@ -193,7 +193,7 @@ app.get("/", (req, res) => {
                 return response.json();
               })
               .then(updatedTodo => {
-                const todoElement = document.querySelector(`li[data-id='${id}']`);
+                const todoElement = document.querySelector('li[data-id="' + id + '"]');
                 if (todoElement) {
                   todoElement.classList.add('done');
                   const button = todoElement.querySelector('button');
@@ -209,12 +209,12 @@ app.get("/", (req, res) => {
               .then(response => response.json())
               .then(todos => {
                 const todoList = document.querySelector('.todo-list');
-                todoList.innerHTML = todos.map(todo => `
-                  <li class="${todo.done ? 'done' : ''}" data-id="${todo.id}">
-                    <span>${todo.todo}</span>
-                    ${!todo.done ? `<button onclick="markAsDone(${todo.id})">Done</button>` : ''}
-                  </li>
-                `).join('');
+                todoList.innerHTML = todos.map(todo => 
+                  '<li class="' + (todo.done ? 'done' : '') + '" data-id="' + todo.id + '">' +
+                    '<span>' + todo.todo + '</span>' +
+                    (!todo.done ? '<button onclick="markAsDone(' + todo.id + ')">Done</button>' : '') +
+                  '</li>'
+                ).join('');
               })
               .catch(error => console.error('Error fetching todos:', error));
           </script>
@@ -338,21 +338,23 @@ app.post("/todos", async (req, res) => {
 });
 
 app.put("/todos/:id", async (req, res) => {
-    const { id } = req.params;
-    const { done } = req.body;
-    const timestamp = new Date().toISOString();
+  const { id } = req.params;
+  const { done } = req.body;
+  const timestamp = new Date().toISOString();
 
-    try {
-        const response = await axios.put(`${TODO_BACKEND_URL}/${id}`, { done });
-        console.log(`[${timestamp}] Frontend: Todo update successfully sent to backend`);
-        res.json(response.data);
-    } catch (error) {
-        console.error(
-            `[${timestamp}] Frontend: Error updating todo:`,
-            error.response?.data || error.message
-        );
-        res.status(500).json({ error: "Failed to update todo" });
-    }
+  try {
+    const response = await axios.put(`${TODO_BACKEND_URL}/${id}`, { done });
+    console.log(
+      `[${timestamp}] Frontend: Todo update successfully sent to backend`
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error(
+      `[${timestamp}] Frontend: Error updating todo:`,
+      error.response?.data || error.message
+    );
+    res.status(500).json({ error: "Failed to update todo" });
+  }
 });
 
 // Health check endpoint for database connection
