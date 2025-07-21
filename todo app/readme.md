@@ -1,1 +1,3 @@
-## 4.2. [The project, step 21(livenessProb+readinessProbe)](../todo-backend/)
+# 4.5. The project, step 22
+
+> "Done" field for todos that are already done.
