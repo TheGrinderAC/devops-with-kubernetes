@@ -6,11 +6,9 @@ const { connect, StringCodec } = require("nats");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Setup CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
-// Request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${req.method} ${req.url}`);
@@ -133,34 +131,37 @@ app.post("/todos", async (req, res) => {
 
 // Update a todo
 app.put("/todos/:id", async (req, res) => {
-    const { id } = req.params;
-    const { done } = req.body;
-    const timestamp = new Date().toISOString();
+  const { id } = req.params;
+  const { done } = req.body;
+  const timestamp = new Date().toISOString();
 
-    if (typeof done !== 'boolean') {
-        return res.status(400).json({ error: 'Invalid "done" field' });
+  if (typeof done !== "boolean") {
+    return res.status(400).json({ error: 'Invalid "done" field' });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, todo, done",
+      [done, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Todo not found" });
     }
 
-    try {
-        const result = await pool.query(
-            "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, todo, done",
-            [done, id]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: "Todo not found" });
-        }
-
-        console.log(`[${timestamp}] PUT /todos/${id} - Todo updated successfully`);
-        if (nc) {
-            nc.publish("todos", stringCodec.encode(JSON.stringify(result.rows[0])));
-            console.log("Todo update published to NATS");
-        }
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(`[${timestamp}] PUT /todos/${id} - ERROR: Database error:`, err.message);
-        res.status(500).json({ error: "Failed to update todo" });
+    console.log(`[${timestamp}] PUT /todos/${id} - Todo updated successfully`);
+    if (nc) {
+      nc.publish("todos", stringCodec.encode(JSON.stringify(result.rows[0])));
+      console.log("Todo update published to NATS");
     }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(
+      `[${timestamp}] PUT /todos/${id} - ERROR: Database error:`,
+      err.message
+    );
+    res.status(500).json({ error: "Failed to update todo" });
+  }
 });
 
 // Liveness probe to check if the server is running
