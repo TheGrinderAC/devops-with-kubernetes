@@ -15,7 +15,12 @@ spec:
       initContainers:
         - name: check-db
           image: busybox:1.28
-          command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;']
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;",
+            ]
       containers:
         - name: todo-backend
           image: PROJECT/IMAGE
@@ -64,5 +69,5 @@ spec:
               path: /readyz
               port: 3001
             initialDelaySeconds: 10
-            periodSeconds: 5
+            periodSeconds: 20
             failureThreshold: 3

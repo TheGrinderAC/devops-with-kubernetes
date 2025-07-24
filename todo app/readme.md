@@ -10,7 +10,9 @@ The broadcaster should send the message forward to Discord
 helm install --set auth.enabled=false my-nats oci://registry-1.docker.io/bitnamicharts/nats
 ```
 
-2. Created a brodcaster app to handle the NATS connections.
-3. Made changes in todo-backend for the intregration
+2. Created a [brodcaster](../broadcaster/) app service to handle the NATS connections.
+3. Made changes in [todo-backend](../todo-backend/index.js) for the intregration
+
+![image](./image.png)
 
 > Skipped setting up prometheus with grafana for monitoring the NATS
