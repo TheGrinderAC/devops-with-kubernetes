@@ -4,6 +4,3 @@ resources:
   - manifests/configmap.yaml
   - manifests/deployment.yaml
   - manifests/service.yaml
-images:
-  - name: PROJECT/IMAGE
-    newName: placeholder

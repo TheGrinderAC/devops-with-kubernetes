@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
-const stan = require("node-nats-streaming");
+const { connect, StringCodec } = require("nats");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,19 +32,18 @@ const pool = new Pool({
   database: process.env.POSTGRES_DB || "postgres",
 });
 
-const natsServer = process.env.NATS_SERVER || "nats://nats-svc:4222";
-const clusterId = process.env.NATS_CLUSTER_ID || "test-cluster";
-const clientId = `todo-backend-${Math.random().toString(36).substring(2, 15)}`;
+const natsServer = process.env.NATS_SERVER || "nats://my-nats:4222";
+let nc;
+const stringCodec = StringCodec();
 
-const sc = stan.connect(clusterId, clientId, { url: natsServer });
-
-sc.on("connect", () => {
-  console.log("Connected to NATS streaming server");
-});
-
-sc.on("error", (err) => {
-  console.error("NATS connection error:", err);
-});
+(async () => {
+  try {
+    nc = await connect({ servers: natsServer });
+    console.log(`Connected to NATS at ${nc.getServer()}`);
+  } catch (err) {
+    console.error("Error connecting to NATS:", err);
+  }
+})();
 
 // Ensure the todos table exists
 const initDb = async () => {
@@ -118,13 +117,10 @@ app.post("/todos", async (req, res) => {
     console.log(
       `[${timestamp}] POST /todos - ACCEPTED: Todo added successfully (${todo.length} chars)`
     );
-    sc.publish("todos", JSON.stringify(result.rows[0]), (err, guid) => {
-      if (err) {
-        console.error("NATS publish error:", err);
-      } else {
-        console.log("Todo published to NATS with guid:", guid);
-      }
-    });
+    if (nc) {
+      nc.publish("todos", stringCodec.encode(JSON.stringify(result.rows[0])));
+      console.log("Todo published to NATS");
+    }
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(
@@ -156,13 +152,10 @@ app.put("/todos/:id", async (req, res) => {
         }
 
         console.log(`[${timestamp}] PUT /todos/${id} - Todo updated successfully`);
-        sc.publish("todos", JSON.stringify(result.rows[0]), (err, guid) => {
-          if (err) {
-            console.error("NATS publish error:", err);
-          } else {
-            console.log("Todo published to NATS with guid:", guid);
-          }
-        });
+        if (nc) {
+            nc.publish("todos", stringCodec.encode(JSON.stringify(result.rows[0])));
+            console.log("Todo update published to NATS");
+        }
         res.json(result.rows[0]);
     } catch (err) {
         console.error(`[${timestamp}] PUT /todos/${id} - ERROR: Database error:`, err.message);

@@ -28,11 +28,6 @@ spec:
                 configMapKeyRef:
                   name: broadcaster-config
                   key: NATS_SERVER
-            - name: NATS_CLUSTER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: broadcaster-config
-                  key: NATS_CLUSTER_ID
             - name: PORT
               value: "3001"
             - name: POSTGRES_HOST

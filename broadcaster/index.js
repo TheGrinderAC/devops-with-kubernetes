@@ -1,50 +1,46 @@
 const express = require("express");
 const axios = require("axios");
-const stan = require("node-nats-streaming");
+const { connect, StringCodec } = require("nats");
 
 const app = express();
 const port = process.env.PORT || 3002;
 const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-const natsServer = process.env.NATS_SERVER || "nats://nats-svc:4222";
-const clusterId = process.env.NATS_CLUSTER_ID || "test-cluster";
-const clientId = `broadcaster-${Math.random().toString(36).substring(2, 15)}`;
+const natsServer = process.env.NATS_SERVER || "nats://my-nats:4222";
 
-const sc = stan.connect(clusterId, clientId, { url: natsServer });
+const stringCodec = StringCodec();
 
-sc.on("connect", () => {
-  console.log("Connected to NATS streaming server");
+(async () => {
+  try {
+    const nc = await connect({ servers: natsServer });
+    console.log(`Connected to NATS at ${nc.getServer()}`);
 
-  const opts = sc.subscriptionOptions();
-  opts.setDeliverAllAvailable();
-  opts.setDurableName("broadcaster-durable");
-  opts.setManualAckMode(true);
-  opts.setAckWait(60000); // 60 seconds
+    const sub = nc.subscribe("todos", { queue: "broadcaster-queue" });
+    (async () => {
+      for await (const m of sub) {
+        try {
+          const todo = JSON.parse(stringCodec.decode(m.data));
+          console.log("Received a message:", todo);
 
-  const subscription = sc.subscribe("todos", "broadcaster-queue", opts);
+          const message = {
+            content: `Todo updated: **${todo.todo}** (Status: ${
+              todo.done ? "Done" : "In progress"
+            })`,
+          };
 
-  subscription.on("message", async (msg) => {
-    try {
-      const todo = JSON.parse(msg.getData());
-      console.log("Received a message:", todo);
+          await axios.post(discordWebhookUrl, message);
+          console.log("Message sent to Discord");
+        } catch (error) {
+          console.error("Error processing message:", error.message);
+        }
+      }
+      console.log("subscription closed");
+    })();
+    console.log("Subscribed to 'todos'");
+  } catch (err) {
+    console.error("NATS connection error:", err);
+  }
+})();
 
-      const message = {
-        content: `Todo updated: **${todo.todo}** (Status: ${todo.done ? "Done" : "In progress"})`,
-      };
-
-      await axios.post(discordWebhookUrl, message);
-      console.log("Message sent to Discord");
-
-      msg.ack();
-    } catch (error) {
-      console.error("Error processing message:", error.message);
-      // Don't ack the message, so it can be redelivered
-    }
-  });
-});
-
-sc.on("error", (err) => {
-  console.error("NATS connection error:", err);
-});
 
 app.get("/healthz", (req, res) => {
   res.status(200).json({ status: "ok" });

@@ -5,5 +5,4 @@ metadata:
 data:
   PORT: "3002"
   DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1397937031648120994/N-4lqyOz81R-r9BxDnXKCzxAXjIDhJTrPY9negmoK3ETZfPAh3nXwXNQHudBxJ1c1K5U"
-  NATS_SERVER: "nats://nats-svc:4222"
-  NATS_CLUSTER_ID: "test-cluster"
+  NATS_SERVER: "nats://my-nats:4222"
