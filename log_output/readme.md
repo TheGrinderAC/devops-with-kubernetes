@@ -100,6 +100,5 @@ jobs:
   ```
 
 - Don't forget to check the github workflow and namespace updates as needed
-
-![1](./2.png)
-![2](./image.png)
+  ![1](./2.png)
+  ![2](./image.png)
