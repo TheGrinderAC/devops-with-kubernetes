@@ -1,12 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - manifests/configmap.yaml
-  - manifests/deployment.yaml
-  - manifests/service.yaml
-  - manifests/ingress.yaml
+- manifests/configmap.yaml
+- manifests/deployment.yaml
+- manifests/service.yaml
+- manifests/ingress.yaml
 
 images:
-  - name: todo-app
-    newName: placeholder # bidhe1/todo_app:latest <-- before using the gcp artifacts registary
-
+- name: todo-app
+  newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
+  newTag: main-7e7ebcd0dbd00dc9fff39c2a36e5a7aa6b755520
