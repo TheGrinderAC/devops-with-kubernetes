@@ -76,20 +76,27 @@ jobs:
 - Make sure Argo Rollouts is installed for canary updates via:
 
   ```
-  kubectl apply -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+  kubectl create namespace argo-rollouts
+  kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
   ```
 
 - Gateway API cluster update is required:
 
-  ```
-  gcloud container clusters update dwk-cluster2 --location=us-central1-a --gateway-api=standard
-  ```
+  `gcloud container clusters update dwk-cluster2 --location=us-central1-a --gateway-api=standard`
 
 - For Prometheus functionalities (e.g., CPU monitoring for rollouts), check if Prometheus is installed and the endpoint address in the YAML is properly configured.
 
   ```
   # Example Prometheus address:
   # http://prometheus-kube-prometheus-prometheus.prometheus.svc.prometheus.cluster.local:9090
+
+  # To create the prometheus namespace and install Prometheus using Helm:
+  kubectl create namespace prometheus
+
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm repo update
+
+  helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace prometheus
   ```
 
 - Check that the namespace is created before pushing changes.

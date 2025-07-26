@@ -16,11 +16,9 @@ spec:
       failureLimit: 1
       provider:
         prometheus:
-          # Prometheus address for querying metrics(if it was in the same name spce it would be
-          #  address: http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090
-          # the savc.namspace here namespace is promethues)
-          address: http://prometheus-kube-prometheus-prometheus.prometheus.svc.prometheus.cluster.local:9090
+          # Prometheus address for querying metrics
+          address: http://kube-prometheus-stack-prometheus.prometheus.svc.cluster.local:9090
           query: |
             sum(rate(container_cpu_usage_seconds_total{namespace="exercises", container!~"POD|istio-proxy|"}[5m]))
-      # Fail if CPU usage exceeds 0.91 cores (500m)
+      # Fail if CPU usage exceeds 0.90cores (500m)
       successCondition: result[0] <= 0.90
