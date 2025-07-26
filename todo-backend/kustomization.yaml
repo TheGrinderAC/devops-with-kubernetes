@@ -9,6 +9,8 @@ resources:
 - manifests/pg_backup.yaml
 
 images:
+  - name: todo-backend
+    newName: placeholder #bidhe1/todo-backend:latest ok
 - name: PROJECT/IMAGE
   newName: placeholder
 - name: todo-backend
