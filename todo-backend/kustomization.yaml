@@ -1,18 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- manifests/secret.yaml
-- manifests/postgres-statefulset.yaml
-- manifests/deployment.yaml
-- manifests/service.yaml
-- manifests/todo_job.yaml
-- manifests/pg_backup.yaml
+  - manifests/secret.yaml
+  - manifests/postgres-statefulset.yaml
+  - manifests/deployment.yaml
+  - manifests/service.yaml
+  - manifests/todo_job.yaml
+  - manifests/pg_backup.yaml
 
 images:
   - name: todo-backend
-    newName: placeholder #bidhe1/todo-backend:latest ok
-- name: PROJECT/IMAGE
-  newName: placeholder
-- name: todo-backend
-  newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-backend
-  newTag: main-cf3965b3cd28046ea0fc8ce5318af44f136e5d51
+    newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-backend
+    newTag: main-cf3965b3cd28046ea0fc8ce5318af44f136e5d51
