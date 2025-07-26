@@ -9,4 +9,4 @@ resources:
 images:
 - name: todo-app
   newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
-  newTag: main-7e7ebcd0dbd00dc9fff39c2a36e5a7aa6b755520
+  newTag: main-ec7aa640f2638db9fc2a47e79926ebe346239777
