@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: todoapp
-          image: PROJECT/IMAGE
+          image: todo-app
           envFrom:
             - configMapRef:
                 name: app-config
