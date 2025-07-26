@@ -75,5 +75,7 @@ jobs:
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9
         with:
-          add: "todo app/kustomization.yaml"
-          message: "New version released todo_app:${IMAGE_TAG}"
+          add: "kustomization.yaml"
+          message: "New version released todo_app:${{ env.IMAGE_TAG }}"
+          cwd: "./todo app"
+          default_author: github_actions
