@@ -7,6 +7,6 @@ resources:
   - manifests/ingress.yaml
 
 images:
-  - name: PROJECT/IMAGE
+  - name: log_output
     newName: placeholder # bidhe1/todo_app:latest <-- before using the gcp artifacts registary
 
