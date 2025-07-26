@@ -10,4 +10,4 @@ resources:
 images:
 - name: pong_application
   newName: bidhe1/pong_application
-  newTag: d24334d2ee99bb2f936f3c9b7e2e748c1ffd59b8
+  newTag: 8ff12ed212549a5623ab63d400403152dfa8e3cc
