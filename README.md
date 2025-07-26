@@ -55,3 +55,4 @@
 - [4.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.4/pong-application)
 - [4.5](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.5/todo%20app)
 - [4.6](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.6/todo%20app)
+- [4.7](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.7/log_output)
