@@ -21,6 +21,8 @@ Todo App leverages GitOps for automated deployments, building on the approach fr
 
   > Ensure NATS is running before deploying the Todo App to enable broadcast features.
 
+![tdo](./image.png)
+
 ## Checks:
 
 - [ ] NATS is installed and running in your cluster.

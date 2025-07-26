@@ -34,14 +34,23 @@ const natsServer = process.env.NATS_SERVER || "nats://my-nats:4222";
 let nc;
 const stringCodec = StringCodec();
 
-(async () => {
-  try {
-    nc = await connect({ servers: natsServer });
-    console.log(`Connected to NATS at ${nc.getServer()}`);
-  } catch (err) {
-    console.error("Error connecting to NATS:", err);
+// Retry logic for NATS connection
+const connectToNatsWithRetry = async () => {
+  while (true) {
+    try {
+      nc = await connect({ servers: natsServer });
+      console.log(`Connected to NATS at ${nc.getServer()}`);
+      break;
+    } catch (err) {
+      console.error(
+        `Error connecting to NATS: ${err.message}. Retrying in 5 seconds...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
-})();
+};
+
+connectToNatsWithRetry();
 
 // Ensure the todos table exists
 const initDb = async () => {
