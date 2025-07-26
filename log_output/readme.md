@@ -28,8 +28,6 @@ The initial password for the admin account is auto-generated and stored as clear
 kubectl get -n argocd secrets argocd-initial-admin-secret -o yaml
 ```
 
-- GatewayAPI cluster update require
-
 #### manage the image for argocd
 
 ```yaml
@@ -72,3 +70,26 @@ jobs:
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
 ```
+
+### Some Important Checks
+
+- Make sure Argo Rollouts is installed for canary updates via:
+
+  ```
+  kubectl apply -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+  ```
+
+- Gateway API cluster update is required:
+
+  ```
+  gcloud container clusters update dwk-cluster2 --location=us-central1-a --gateway-api=standard
+  ```
+
+- For Prometheus functionalities (e.g., CPU monitoring for rollouts), check if Prometheus is installed and the endpoint address in the YAML is properly configured.
+
+  ```
+  # Example Prometheus address:
+  # http://prometheus-kube-prometheus-prometheus.prometheus.svc.prometheus.cluster.local:9090
+  ```
+
+- Check that the namespace is created before pushing changes.

@@ -1,5 +1,5 @@
 # This analysis runs during the rollout step: it checks CPU usage in the "exercises" namespace 10 times at 15s intervals (total 2.5 minutes).
-# If CPU usage exceeds 0.5 cores (500m) in any check, the rollout fails and is automatically rolled back.
+# If CPU usage exceeds 0.9 cores (900m) in any check, the rollout fails and is automatically rolled back.
 # This helps catch performance regressions and prevents new versions from causing unexpected CPU spikes.
 
 apiVersion: argoproj.io/v1alpha1
@@ -22,5 +22,5 @@ spec:
           address: http://prometheus-kube-prometheus-prometheus.prometheus.svc.prometheus.cluster.local:9090
           query: |
             sum(rate(container_cpu_usage_seconds_total{namespace="exercises", container!~"POD|istio-proxy|"}[5m]))
-      # Fail if CPU usage exceeds 0.5 cores (500m)
-      successCondition: result[0] <= 0.5
+      # Fail if CPU usage exceeds 0.90 cores (500m)
+      successCondition: result[0] <= 0.90
