@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-publish:
-    name: Log_output Build, Push, Release
+    name: Pong_Application Build, Push, Release
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +27,7 @@ jobs:
       # Tag image with the GitHub SHA to get a unique tag
       - name: Build and publish backend
         run: |
-          docker build --tag "bidhe1/pong_application:${GITHUB_SHA}" log_output
+          docker build --file pong-application/dockerfile --tag "bidhe1/pong_application:${GITHUB_SHA}" pong-application
           docker push "bidhe1/pong_application:${GITHUB_SHA}"
 
       - name: Set up Kustomize
@@ -36,7 +36,7 @@ jobs:
       - name: Update kustomization.yaml with new image
         run: |
           cd pong-application
-          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+          kustomize edit set image pong_application=bidhe1/pong_application:${GITHUB_SHA}
 
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9

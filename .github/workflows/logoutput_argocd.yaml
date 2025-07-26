@@ -27,7 +27,7 @@ jobs:
       # Tag image with the GitHub SHA to get a unique tag
       - name: Build and publish backend
         run: |
-          docker build --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
+          docker build --file log_output/dockerfile.reader --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
           docker push "bidhe1/log_output:${GITHUB_SHA}"
 
       - name: Set up Kustomize
