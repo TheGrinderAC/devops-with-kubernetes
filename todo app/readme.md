@@ -1,32 +1,17 @@
-# 4.8 GitOps for Todo App
+# 4.9: Rogh
 
-Todo App leverages GitOps for automated deployments, building on the approach from [4.7](../log_output/readme.md) with argocd
+This project uses a CI/CD pipeline to automatically deploy the application to the **staging environment** whenever a commit is pushed to the `main` branch. The process works as follows:
 
-- same for the [todo-backend](../.github/workflows/todo-backend-gke_rollout.yaml)
+### Prod:
 
-## Prerequisites
+1. **Push to main branch:** When you push a commit to the `main` branch, it triggers a GitHub Actions workflow.
+2. **GitHub Actions:** The workflow builds a new Docker image of the application.
+3. **Push to Google Artifact Registry (GAR):** The newly built image is pushed to the container registry.
+4. **Update kustomization.yaml:** The workflow updates the image reference in `apps/[app]/overlays/staging/kustomization.yaml` to use the new image.
+5. **ArgoCD deployment:** ArgoCD detects the change in the kustomization file and automatically deploys the updated application to the staging namespace in the Kubernetes cluster.
 
-- Review [4.7 Log Output GitOps](../log_output/readme.md) for a detailed walkthrough of the GitOps setup.
-- Ensure ArgoCD is installed and configured in your cluster.
-- Make sure you have set up the necessary secrets and permissions for GitHub Actions to access your container registry and repository.
+### staging:
 
-## Additional Setup for Todo App
-
-- **NATS Installation:**  
-  The Todo App uses NATS for broadcast functionality. Install NATS in your cluster (in the appropriate namespace) using Helm:
-
-  ```sh
-  helm install --set auth.enabled=false my-nats oci://registry-1.docker.io/bitnamicharts/nats
-  ```
-
-  > Ensure NATS is running before deploying the Todo App to enable broadcast features.
-
-![tdo](./image.png)
-
-## Checks:
-
-- [ ] NATS is installed and running in your cluster.
-- [ ] ArgoCD is up and configured to watch the correct namespace/repo.
-- [ ] GitHub Actions workflow is set up for CI/CD (see `.github/workflows/todoapp-gke-rollout.yaml`).
-
-For more details, refer to the [4.7 Log Output GitOps instructions](../log_output/readme.md).
+Push to main → GitHub Actions → Build image → Push to GAR →
+Update apps/[app]/overlays/staging/kustomization.yaml →
+ArgoCD detects change → Deploys to staging namespace
