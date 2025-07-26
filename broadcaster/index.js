@@ -38,7 +38,12 @@ const connectToNATS = async () => {
       for await (const m of sub) {
         try {
           const todo = JSON.parse(sc.decode(m.data));
-          console.log("Received todo message:", todo);
+
+          if (process.env.NODE_ENV === "staging") {
+            console.log("Staging environment: not forwarding to Discord.");
+            console.log("Received todo message:", todo);
+            continue;
+          }
 
           if (!discordWebhookUrl) {
             console.error("Discord webhook URL not configured");

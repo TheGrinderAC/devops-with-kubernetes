@@ -1,0 +1,9 @@
+# Rough
+#  Each commit to the main branch should result in deployment to the staging environment
+
+# need to change the logOutputMS(pong)_argocd && todoapp-gke-rollout accordingly
+
+# Push to main → GitHub Actions → Build image → Push to GAR →
+# Update apps/[app]/overlays/staging/kustomization.yaml →
+# ArgoCD detects change → Deploys to staging namespace
+

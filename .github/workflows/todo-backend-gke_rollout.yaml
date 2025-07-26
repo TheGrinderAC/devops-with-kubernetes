@@ -2,14 +2,14 @@
 
 name: Release Todo-Backend Application
 
-on:
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
-    paths:
-      - "todo-backend/**"
+# on:
+#   push:
+#     branches:
+#       - "**"
+#     tags-ignore:
+#       - "**"
+#     paths:
+#       - "todo-backend/**"
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}

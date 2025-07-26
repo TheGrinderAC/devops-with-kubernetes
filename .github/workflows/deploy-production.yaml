@@ -1,0 +1,14 @@
+# Rough
+# Each tagged commit results in deployment to the production environment
+
+# need to change the logOutputMS(pong)_argocd && todoapp-gke-rollout accordingly! clean up not needed either as logic & structure chnages
+
+# Tag commit → GitHub Actions → Build image → Push to GAR →
+# Update apps/[app]/overlays/production/kustomization.yaml →
+# ArgoCD detects change → Deploys to production namespace
+
+# onetime setup script needed
+
+# # Deploy app-of-apps (this is the ONLY manual kubectl apply needed)
+# kubectl apply -f argocd/app-of-apps/staging.yaml
+# kubectl apply -f argocd/app-of-apps/production.yaml
