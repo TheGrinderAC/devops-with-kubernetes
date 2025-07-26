@@ -34,33 +34,38 @@ kubectl get -n argocd secrets argocd-initial-admin-secret -o yaml
 
 ```yaml
 ---
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+jobs:
+  build-publish:
+    name: Log_output Build, Push, Release
+    runs-on: ubuntu-latest
 
-  - name: Login to Docker Hub
-    uses: docker/login-action@v3
-    with:
-      username: ${{ secrets.DOCKERHUB_USERNAME }}
-      password: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  # Tag image with the GitHub SHA to get a unique tag
-  - name: Build and publish backend
-    run: |
-      docker build --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
-      docker push "bidhe1/log_output:${GITHUB_SHA}"
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  - name: Set up Kustomize
-    uses: imranismail/setup-kustomize@v2
+      # Tag image with the GitHub SHA to get a unique tag
+      - name: Build and publish backend
+        run: |
+          docker build --file log_output/dockerfile.reader --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
+          docker push "bidhe1/log_output:${GITHUB_SHA}"
 
-  - name: Update kustomization.yaml with new image
-    run: |
-      cd log_output
-      kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
 
-  - name: Commit kustomization.yaml to GitHub
-    uses: EndBug/add-and-commit@v9
-    with:
-      add: "log_output/kustomization.yaml"
-      message: "New version released ${{ github.sha }}"
+      - name: Update kustomization.yaml with new image
+        run: |
+          cd log_output/manifests
+          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+
+      - name: Commit kustomization.yaml to GitHub
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "log_output/manifests/kustomization.yaml"
+          message: "New version released ${{ github.sha }}"
 ```
