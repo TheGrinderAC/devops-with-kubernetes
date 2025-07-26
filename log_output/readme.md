@@ -56,14 +56,19 @@ jobs:
         run: |
           docker build --file log_output/dockerfile.reader --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
           docker push "bidhe1/log_output:${GITHUB_SHA}"
-
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2
 
       - name: Update kustomization.yaml with new image
         run: |
           cd log_output/manifests
-          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA} # github will auto create
+          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+
+      - name: Pull latest changes from remote before commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin ${{ github.ref_name }} || true
 
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9
@@ -71,5 +76,3 @@ jobs:
           add: "log_output/manifests/kustomization.yaml"
           message: "New version released ${{ github.sha }}"
 ```
-
-- scope updated

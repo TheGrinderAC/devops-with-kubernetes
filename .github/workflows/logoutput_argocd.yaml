@@ -43,6 +43,12 @@ jobs:
           cd log_output/manifests
           kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
 
+      - name: Pull latest changes from remote before commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin ${{ github.ref_name }} || true
+
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9
         with:

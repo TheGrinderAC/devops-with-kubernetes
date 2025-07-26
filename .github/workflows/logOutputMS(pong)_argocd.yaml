@@ -43,6 +43,12 @@ jobs:
           cd pong-application
           kustomize edit set image pong_application=bidhe1/pong_application:${GITHUB_SHA}
 
+      - name: Pull latest changes from remote before commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin ${{ github.ref_name }} || true
+
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9
         with:
