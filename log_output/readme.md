@@ -98,5 +98,3 @@ jobs:
 
   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace prometheus
   ```
-
-- Check that the namespace is created before pushing changes.
