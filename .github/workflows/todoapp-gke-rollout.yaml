@@ -1,4 +1,4 @@
-# A complete CI/CD pipeline using GitHub Actions to automatically build, push, and deploy containerized applications to (GKE)Google Kubernetes Engine.
+# A CI/CD pipeline using GitHub Actions to build and push container images, and update manifests for GitOps-based deployment (no direct push to GKE).
 
 name: Release Todo Application
 
@@ -6,37 +6,31 @@ on:
   push:
     branches:
       - "**"
-    tags-ignore: # will not trigger when publish a new release
+    tags-ignore:
       - "**"
     paths:
       - "todo app/**"
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster2
-  GKE_ZONE: us-central1-a
   REGISTRY: us-central1-docker.pkg.dev
   REPOSITORY: my-repository
   IMAGE: todo-app
-  SERVICE: todo-app
   BRANCH: ${{ github.ref_name }}
 
 # PROJECT_ID: My Google Cloud project ID (from secrets)
-# GKE_CLUSTER: Name of your GKE cluster
-# GKE_ZONE: Zone where your cluster is located
 # REGISTRY: Artifact Registry location(can be found in artifact registry setup instruction)
 # REPOSITORY: Name of your Docker repository
 # IMAGE: Name of your application image(my choice: This can be any name I want)
-# SERVICE: Name of your Kubernetes service (Must match deployment.yaml metadata.name)
 # BRANCH: Current git branch name
 
 jobs:
-  build-deploy-publish: # Job names should be lowercase with hyphens
-    name: Build, Deploy and Publish
+  build-publish-gitops:
+    name: Build, Publish, and Update Manifests (GitOps)
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Downloads the repository code to the runner.
+      # Step 1: Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -50,79 +44,36 @@ jobs:
       - name: "Set up Cloud SDK"
         uses: google-github-actions/setup-gcloud@v2
 
-      # Step 4: Verify gcloud setup
-      - name: "Use gcloud CLI"
-        run: gcloud info
-
-      # Step 5: Configure Docker to use gcloud as credential helper
+      # Step 4: Configure Docker to use gcloud as credential helper
       - name: Configure Docker
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
 
-      # Step 6: Get GKE credentials(Google Kubernetes cluster to get credentials )
-      - name: "Get GKE credentials"
-        uses: "google-github-actions/get-gke-credentials@v2"
-        with:
-          cluster_name: "${{ env.GKE_CLUSTER }}"
-          project_id: "${{ env.PROJECT_ID }}"
-          location: "${{ env.GKE_ZONE }}"
-
-      # Step 7: Form the image name with registry path
+      # Step 5: Form the image name with registry path
       - name: "Form the image name"
         run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
 
-      # Step 8: Build the Docker image
+      # Step 6: Build the Docker image
       - name: Build
         run: docker build --tag $IMAGE_TAG "todo app"
 
-      # Step 9: Push the image to Artifact Registry
+      # Step 7: Push the image to Artifact Registry
       - name: Publish
         run: docker push $IMAGE_TAG
 
-      # Step 10: Set up Kustomize
+      # Step 8: Set up Kustomize
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
-      # Step 11: Deploy to GKE
-      - name: Deploy to GKE
-        working-directory: "todo app"
+      # updated at (ex 4.8. The project, step 24)
+      # using gitops instade of pushing directly to cluster(only doing for the main(project namespace), as it is enough for this excercise)
+      - name: Update kustomization.yaml with new image
         run: |
-          if [ "$BRANCH" == "main" ]; then
-            NAMESPACE="project"
-          else
-            NAMESPACE="$BRANCH"
-            echo "Deploying to namespace: $NAMESPACE"
-            kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-          fi
+          cd "todo app"
+          kustomize edit set image todo-app=$IMAGE_TAG
 
-          pwd
-          ls -la
-          kustomize edit set image PROJECT/IMAGE=$IMAGE_TAG
-          kustomize edit set namespace $NAMESPACE
-          kustomize build . | kubectl apply -f -
-
-          # Wait for the deployment to be created before checking rollout status
-          for i in {1..10}; do
-            kubectl get deployment $SERVICE -n $NAMESPACE && break
-            echo "Waiting for deployment to be created..."
-            sleep 5
-          done
-
-          # Check the rollout status of the deployment.
-          set +e
-          kubectl rollout status deployment $SERVICE -n $NAMESPACE
-          ROLLOUT_STATUS=$?
-          set -e
-
-          if [ $ROLLOUT_STATUS -ne 0 ]; then
-            echo "::warning::Deployment '$SERVICE' failed to roll out successfully. See logs above for details."
-            kubectl describe deployment $SERVICE -n $NAMESPACE || true
-            kubectl get pods -n $NAMESPACE -o wide || true
-            kubectl logs deployment/$SERVICE -n $NAMESPACE --tail=100 || true
-          fi
-
-          # List all services and ingresses in the namespace for debugging
-          kubectl get services -n $NAMESPACE -o wide
-          kubectl get ingress -n $NAMESPACE -o wide
-
-          # Show the actual ingress configuration
-          kubectl describe ingress todo-app-ingress -n $NAMESPACE
+      # Step 10: Commit kustomization.yaml to GitHub (GitOps)
+      - name: Commit kustomization.yaml to GitHub
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "todo app/kustomization.yaml"
+          message: "New version released todo_app:${IMAGE_TAG}"
