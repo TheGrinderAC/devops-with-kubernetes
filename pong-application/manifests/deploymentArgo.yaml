@@ -9,7 +9,7 @@ spec:
     canary:
       # Canary deployment strategy
       steps:
-        - setWeight: 20 # Start with 20% traffic to new version
+        - setWeight: 50 # Start with 500% traffic to new version
         - pause:
             duration: 30s # Wait 30 seconds
         - analysis:

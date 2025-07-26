@@ -22,5 +22,5 @@ spec:
           address: http://prometheus-kube-prometheus-prometheus.prometheus.svc.prometheus.cluster.local:9090
           query: |
             sum(rate(container_cpu_usage_seconds_total{namespace="exercises", container!~"POD|istio-proxy|"}[5m]))
-      # Fail if CPU usage exceeds 0.90 cores (500m)
+      # Fail if CPU usage exceeds 0.91 cores (500m)
       successCondition: result[0] <= 0.90
