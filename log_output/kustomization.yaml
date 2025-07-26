@@ -9,4 +9,4 @@ resources:
 images:
 - name: log_output
   newName: bidhe1/log_output
-  newTag: 691b11c74af0a0da46defd076e448f0300140601
+  newTag: 61297f75addd8cfc0b08b256205a92b07ce1cd97
