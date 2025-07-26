@@ -46,13 +46,13 @@ jobs:
 
       - name: Update kustomization.yaml with new image
         run: |
-          cd log_output/manifests
+          cd log_output
           kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "New version released ${{ github.sha }}"
-          file_pattern: "log_output/manifests/kustomization.yaml"
+          file_pattern: "log_output/kustomization.yaml"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"

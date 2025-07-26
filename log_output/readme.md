@@ -98,3 +98,5 @@ jobs:
 
   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace prometheus
   ```
+
+- Don't forhet to check the github workflow and namespace
