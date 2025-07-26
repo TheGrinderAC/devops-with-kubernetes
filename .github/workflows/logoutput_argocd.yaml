@@ -49,10 +49,8 @@ jobs:
           cd log_output
           kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: commit kustomization.yaml to GitHub
+        uses: EndBug/add-and-commit@v9
         with:
-          commit_message: "New version released ${{ github.sha }}"
-          file_pattern: "log_output/kustomization.yaml"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          add: "log_output/kustomization.yaml"
+          message: New version released ${{ github.sha }}
