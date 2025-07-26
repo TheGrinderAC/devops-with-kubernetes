@@ -1,4 +1,4 @@
-## 4.7. Baby steps to GitOps
+## 4.7. GitOps
 
 > Moved the Log output application to use GitOps so that when you commit to the repository, the application is automatically updated using ArgoCD and github action to handle the image, did the same for [pong_application](<../.github/workflows/logOutputMS(pong)_argocd.yaml>) that is one of ms of this.
 
@@ -69,3 +69,5 @@ jobs:
           add: "log_output/manifests/kustomization.yaml"
           message: "New version released ${{ github.sha }}"
 ```
+
+- scope updated

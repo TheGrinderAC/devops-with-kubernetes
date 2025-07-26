@@ -1,1 +1,1 @@
-## [4.7](../log_output/)
+## [4.7 GitOps](../log_output/)
