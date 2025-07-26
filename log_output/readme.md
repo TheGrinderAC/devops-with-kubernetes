@@ -1,1 +1,51 @@
-## 4.1 > [pong application](../pong-application/)
+## 4.7. Baby steps to GitOps
+
+> Moved the Log output application to use GitOps so that when you commit to the repository, the application is automatically updated using ArgoCD and github action to handle the image, did the same for [pong_application](<../.github/workflows/logOutputMS(pong)_argocd.yaml>) that is one of ms of this.
+
+```yaml
+name: Log_Output Build and Publish Application
+
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+    paths:
+      - "log_output/**"
+
+jobs:
+  build-publish:
+    name: Log_output Build, Push, Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Tag image with the GitHub SHA to get a unique tag
+      - name: Build and publish backend
+        run: |
+          docker build --tag "bidhe1/log_output:${GITHUB_SHA}" log_output
+          docker push "bidhe1/log_output:${GITHUB_SHA}"
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update kustomization.yaml with new image
+        run: |
+          cd log_output
+          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+
+      - name: Commit kustomization.yaml to GitHub
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "log_output/kustomization.yaml"
+          message: "New version released ${{ github.sha }}"
+```
