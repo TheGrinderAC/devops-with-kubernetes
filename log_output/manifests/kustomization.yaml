@@ -6,3 +6,8 @@ resources:
   - gateway.yaml
   - routes.yaml
   - service.yaml
+
+images:
+  - name: log_output
+    newName: bidhe1/log_output
+    newTag: latest

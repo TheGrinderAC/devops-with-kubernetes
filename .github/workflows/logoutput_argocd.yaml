@@ -35,11 +35,11 @@ jobs:
 
       - name: Update kustomization.yaml with new image
         run: |
-          cd log_output
+          cd log_output/manifests
           kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
 
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9
         with:
-          add: "log_output/kustomization.yaml"
+          add: "log_output/manifests/kustomization.yaml"
           message: "New version released ${{ github.sha }}"

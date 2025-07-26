@@ -39,7 +39,7 @@ spec:
             ]
       containers:
         - name: pong-application
-          image: bidhe1/pong_application:v1.1
+          image: pong_application
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
