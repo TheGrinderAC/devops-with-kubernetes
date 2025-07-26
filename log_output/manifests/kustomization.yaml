@@ -1,13 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - configmap.yaml
-  - deployment.yaml
-  - gateway.yaml
-  - routes.yaml
-  - service.yaml
-
+- configmap.yaml
+- deployment.yaml
+- gateway.yaml
+- routes.yaml
+- service.yaml
 images:
-  - name: log_output
-    newName: bidhe1/log_output
-    newTag: latest
+- name: log_output
+  newName: bidhe1/log_output
+  newTag: 996aba59284b10a62f67379184404126de069491
