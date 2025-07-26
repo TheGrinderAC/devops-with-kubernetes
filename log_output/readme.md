@@ -99,4 +99,7 @@ jobs:
   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace prometheus
   ```
 
-- Don't forhet to check the github workflow and namespace
+- Don't forget to check the github workflow and namespace updates as needed
+
+![1](./2.png)
+![2](./image.png)
