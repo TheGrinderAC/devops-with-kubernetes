@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -43,14 +44,10 @@ jobs:
           cd log_output/manifests
           kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
 
-      - name: Pull latest changes from remote before commit
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin ${{ github.ref_name }} || true
-
-      - name: Commit kustomization.yaml to GitHub
-        uses: EndBug/add-and-commit@v9
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          add: "log_output/manifests/kustomization.yaml"
-          message: "New version released ${{ github.sha }}"
+          commit_message: "New version released ${{ github.sha }}"
+          file_pattern: "log_output/manifests/kustomization.yaml"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
