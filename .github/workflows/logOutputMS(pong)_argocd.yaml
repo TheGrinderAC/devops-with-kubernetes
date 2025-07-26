@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# Serialize workflows to prevent simultaneous Git operations
+concurrency:
+  group: git-operations-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-publish:
     name: Pong_Application Build, Push, Release

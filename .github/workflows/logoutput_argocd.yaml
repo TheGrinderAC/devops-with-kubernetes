@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# Serialize workflows to prevent simultaneous Git operations (prenevts race condition with git pulling)
+concurrency:
+  group: git-operations-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-publish:
     name: Log_output Build, Push, Release

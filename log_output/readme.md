@@ -30,7 +30,7 @@ kubectl get -n argocd secrets argocd-initial-admin-secret -o yaml
 
 - GatewayAPI cluster update require
 
-#### manage the image for argocd(to have record of using right image and pushing into a artifact like dockerhub)
+#### manage the image for argocd
 
 ```yaml
 ---
