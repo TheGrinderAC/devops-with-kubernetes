@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -61,7 +63,7 @@ jobs:
       - name: Update kustomization.yaml with new image
         run: |
           cd log_output/manifests
-          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA}
+          kustomize edit set image log_output=bidhe1/log_output:${GITHUB_SHA} # github will auto create
 
       - name: Commit kustomization.yaml to GitHub
         uses: EndBug/add-and-commit@v9

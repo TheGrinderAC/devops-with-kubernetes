@@ -9,6 +9,9 @@ on:
     paths:
       - "pong-application/**"
 
+permissions:
+  contents: write
+
 jobs:
   build-publish:
     name: Pong_Application Build, Push, Release
@@ -17,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
