@@ -151,6 +151,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          submodules: false # Skip submodules to avoid issues
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2
@@ -208,19 +209,8 @@ jobs:
             exit 1
           fi
 
-      - name: Determine default branch
-        id: branch
-        run: |
-          DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
-          echo "default-branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
-          echo "Default branch is: $DEFAULT_BRANCH"
-
       - name: Commit and push production changes
         run: |
-          # Make sure we're on the right branch
-          DEFAULT_BRANCH="${{ steps.branch.outputs.default-branch }}"
-          git checkout $DEFAULT_BRANCH
-
           git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
@@ -234,7 +224,19 @@ jobs:
             - todo-backend: ${{ needs.build-todo-backend.outputs.image-tag }}
             
             Deployment triggered by tag: ${{ github.ref }}"
-            git push origin $DEFAULT_BRANCH
+            
+            # Push from detached HEAD to the default branch
+            # First try main, then master as fallback
+            if git ls-remote --heads origin main | grep -q main; then
+              echo "Pushing to main branch"
+              git push origin HEAD:main
+            elif git ls-remote --heads origin master | grep -q master; then
+              echo "Pushing to master branch"
+              git push origin HEAD:master
+            else
+              echo "Error: Neither main nor master branch found"
+              exit 1
+            fi
             echo "Successfully pushed production deployment changes to GitOps repository"
           fi
 
