@@ -7,4 +7,9 @@ patches:
   - path: pg_backup.yaml
   - path: postgres-service-patch.yaml
 
+configMapGenerator:
+  - name: broadcaster-config
+    literals:
+      - NATS_SERVER=nats://my-nats.production.svc.cluster.local:4222
+
 namePrefix: prod-
