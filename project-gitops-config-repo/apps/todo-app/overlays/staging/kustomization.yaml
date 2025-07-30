@@ -4,3 +4,7 @@ resources:
 - ../../base
 
 namePrefix: staging-
+images:
+- name: todo-app
+  newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
+  newTag: 7b35ee973ce97f399972a93e0996e1df9f49d0b0
