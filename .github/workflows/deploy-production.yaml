@@ -171,7 +171,7 @@ jobs:
 
       - name: Update production kustomization files
         run: |
-          cd project-gitops-config-repo || { echo "GitOps repo directory not found"; exit 1; }
+          cd project-gitops-config-repo
 
           VERSION_TAG="${{ needs.prepare-production-deploy.outputs.version-tag }}"
 
@@ -208,9 +208,19 @@ jobs:
             exit 1
           fi
 
+      - name: Determine default branch
+        id: branch
+        run: |
+          DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          echo "default-branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+          echo "Default branch is: $DEFAULT_BRANCH"
+
       - name: Commit and push production changes
         run: |
-          cd project-gitops-config-repo
+          # Make sure we're on the right branch
+          DEFAULT_BRANCH="${{ steps.branch.outputs.default-branch }}"
+          git checkout $DEFAULT_BRANCH
+
           git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
@@ -224,7 +234,7 @@ jobs:
             - todo-backend: ${{ needs.build-todo-backend.outputs.image-tag }}
             
             Deployment triggered by tag: ${{ github.ref }}"
-            git push origin main
+            git push origin $DEFAULT_BRANCH
             echo "Successfully pushed production deployment changes to GitOps repository"
           fi
 
