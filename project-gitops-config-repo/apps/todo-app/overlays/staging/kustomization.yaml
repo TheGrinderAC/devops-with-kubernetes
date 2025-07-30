@@ -12,4 +12,4 @@ patches:
 images:
 - name: todo-app
   newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
-  newTag: edcdf2866122ba49097e08becc1227875292cdfa
+  newTag: a4c7e97d0875da95983e3cacac3018ba43908613
