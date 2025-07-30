@@ -10,3 +10,5 @@ spec:
           env:
             - name: POSTGRES_SERVICE_NAME
               value: "prod-postgres-service"
+            - name: POSTGRES_HOST
+              value: "prod-postgres-service"

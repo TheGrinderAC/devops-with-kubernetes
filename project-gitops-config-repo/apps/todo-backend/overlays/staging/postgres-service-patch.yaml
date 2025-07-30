@@ -10,3 +10,5 @@ spec:
           env:
             - name: POSTGRES_SERVICE_NAME
               value: "staging-postgres-service"
+            - name: POSTGRES_HOST
+              value: "staging-postgres-service"
