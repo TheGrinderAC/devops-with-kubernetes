@@ -176,8 +176,8 @@ jobs:
           VERSION_TAG="${{ needs.prepare-production-deploy.outputs.version-tag }}"
 
           # Update broadcaster for production
-          if [ -f "apps/broadcaster/overlays/production/kustomization.yaml" ]; then
-            cd apps/broadcaster/overlays/production
+          if [ -f "apps/brodcaster/overlays/production/kustomization.yaml" ]; then
+            cd apps/brodcaster/overlays/production
             kustomize edit set image broadcaster=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:$VERSION_TAG
             echo "Updated broadcaster production kustomization to version $VERSION_TAG"
             cd ../../../../
