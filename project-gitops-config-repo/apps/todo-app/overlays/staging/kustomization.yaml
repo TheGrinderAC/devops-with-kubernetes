@@ -1,15 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../base
+- ../../base
 
 namePrefix: staging-
 patches:
-  - path: configmap.yaml
-    target:
-      kind: ConfigMap
-      name: app-config
+- path: configmap.yaml
+  target:
+    kind: ConfigMap
+    name: app-config
 images:
-  - name: todo-app
-    newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
-    newTag: beaf76b418916dff6a5702cbeab97fa5c20f543e
+- name: todo-app
+  newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-app
+  newTag: edcdf2866122ba49097e08becc1227875292cdfa
