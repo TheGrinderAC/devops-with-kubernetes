@@ -8,4 +8,4 @@ data:
   IMAGE_NAME: "image.jpg"
   CACHE_TIMEOUT: "600000"
   IMAGE_API_URL: "https://picsum.photos/1200"
-  TODO_BACKEND_URL: "http://todo-backend-svc:3001/todos"
+  TODO_BACKEND_URL: "http://placholder-todo-backend-svc:3001/todo"
