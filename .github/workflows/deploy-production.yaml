@@ -3,33 +3,47 @@ name: Deploy to Production
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: git-operations-production-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build, Push and Deploy to Production
+  prepare-production-deploy:
+    name: Prepare Production Deployment
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app: [
-          {name: "broadcaster", path: "broadcaster"},
-          {name: "todo-app", path: "todo app"},
-          {name: "todo-backend", path: "todo-backend"}
-        ]
+    outputs:
+      version-tag: ${{ steps.version.outputs.tag }}
+      deploy-all: "true" # For production, we always deploy all apps
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION_TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION_TAG"
+
+  build-broadcaster:
+    name: Build Broadcaster for Production
+    runs-on: ubuntu-latest
+    needs: prepare-production-deploy
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: GCP Auth
         uses: google-github-actions/auth@v2
@@ -43,24 +57,186 @@ jobs:
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build and Push Image
+        id: build
         run: |
-          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/${{ matrix.app.name }}:${{ github.ref_name }}"
-          docker build -t $IMAGE_TAG "./${{ matrix.app.path }}"
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:${{ needs.prepare-production-deploy.outputs.version-tag }}"
+          docker build -t $IMAGE_TAG "./broadcaster"
           docker push $IMAGE_TAG
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Successfully built and pushed broadcaster: $IMAGE_TAG"
+
+  build-todo-app:
+    name: Build Todo App for Production
+    runs-on: ubuntu-latest
+    needs: prepare-production-deploy
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        id: build
+        run: |
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-app:${{ needs.prepare-production-deploy.outputs.version-tag }}"
+          docker build -t $IMAGE_TAG "./todo app"
+          docker push $IMAGE_TAG
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Successfully built and pushed todo-app: $IMAGE_TAG"
+
+  build-todo-backend:
+    name: Build Todo Backend for Production
+    runs-on: ubuntu-latest
+    needs: prepare-production-deploy
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        id: build
+        run: |
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-backend:${{ needs.prepare-production-deploy.outputs.version-tag }}"
+          docker build -t $IMAGE_TAG "./todo-backend"
+          docker push $IMAGE_TAG
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Successfully built and pushed todo-backend: $IMAGE_TAG"
+
+  deploy-to-production:
+    name: Update Production GitOps Configuration
+    runs-on: ubuntu-latest
+    needs:
+      [
+        prepare-production-deploy,
+        build-broadcaster,
+        build-todo-app,
+        build-todo-backend,
+      ]
+    # Wait for all build jobs to complete successfully (no skipping in production)
+    if: |
+      always() && 
+      needs.prepare-production-deploy.result == 'success' &&
+      needs.build-broadcaster.result == 'success' &&
+      needs.build-todo-app.result == 'success' &&
+      needs.build-todo-backend.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2
 
-      - name: Update Kustomization
+      - name: Configure Git
         run: |
-          cd project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/production
-          kustomize edit set image ${{ matrix.app.name }}=${{ env.IMAGE_TAG }}
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Deploy ${{ matrix.app.name }} to production"
-          file_pattern: "project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/production/kustomization.yaml"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+      - name: Verify production build completion
+        run: |
+          echo "Production build job results:"
+          echo "- Broadcaster: ${{ needs.build-broadcaster.result }} (Image: ${{ needs.build-broadcaster.outputs.image-tag }})"
+          echo "- Todo App: ${{ needs.build-todo-app.result }} (Image: ${{ needs.build-todo-app.outputs.image-tag }})"
+          echo "- Todo Backend: ${{ needs.build-todo-backend.result }} (Image: ${{ needs.build-todo-backend.outputs.image-tag }})"
+          echo ""
+          echo "All production builds completed successfully. Proceeding with GitOps update for version: ${{ needs.prepare-production-deploy.outputs.version-tag }}"
+
+      - name: Update production kustomization files
+        run: |
+          cd project-gitops-config-repo || { echo "GitOps repo directory not found"; exit 1; }
+
+          VERSION_TAG="${{ needs.prepare-production-deploy.outputs.version-tag }}"
+
+          # Update broadcaster for production
+          if [ -f "apps/broadcaster/overlays/production/kustomization.yaml" ]; then
+            cd apps/broadcaster/overlays/production
+            kustomize edit set image broadcaster=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:$VERSION_TAG
+            echo "Updated broadcaster production kustomization to version $VERSION_TAG"
+            cd ../../../../
+          else
+            echo "Error: broadcaster production kustomization file not found"
+            exit 1
+          fi
+
+          # Update todo-app for production
+          if [ -f "apps/todo-app/overlays/production/kustomization.yaml" ]; then
+            cd apps/todo-app/overlays/production
+            kustomize edit set image todo-app=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-app:$VERSION_TAG
+            echo "Updated todo-app production kustomization to version $VERSION_TAG"
+            cd ../../../../
+          else
+            echo "Error: todo-app production kustomization file not found"
+            exit 1
+          fi
+
+          # Update todo-backend for production
+          if [ -f "apps/todo-backend/overlays/production/kustomization.yaml" ]; then
+            cd apps/todo-backend/overlays/production
+            kustomize edit set image todo-backend=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-backend:$VERSION_TAG
+            echo "Updated todo-backend production kustomization to version $VERSION_TAG"
+            cd ../../../../
+          else
+            echo "Error: todo-backend production kustomization file not found"
+            exit 1
+          fi
+
+      - name: Commit and push production changes
+        run: |
+          cd project-gitops-config-repo
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 1
+          else
+            git commit -m "Deploy version ${{ needs.prepare-production-deploy.outputs.version-tag }} to production
+            
+            Applications deployed:
+            - broadcaster: ${{ needs.build-broadcaster.outputs.image-tag }}
+            - todo-app: ${{ needs.build-todo-app.outputs.image-tag }}
+            - todo-backend: ${{ needs.build-todo-backend.outputs.image-tag }}
+            
+            Deployment triggered by tag: ${{ github.ref }}"
+            git push origin main
+            echo "Successfully pushed production deployment changes to GitOps repository"
+          fi
+
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.prepare-production-deploy.outputs.version-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Applications:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Broadcaster:** \`${{ needs.build-broadcaster.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY  
+          echo "- **Todo App:** \`${{ needs.build-todo-app.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Todo Backend:** \`${{ needs.build-todo-backend.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All applications have been successfully built, pushed to registry, and GitOps configuration updated." >> $GITHUB_STEP_SUMMARY
