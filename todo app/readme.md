@@ -47,3 +47,6 @@ kubectl apply -f project-gitops-config-repo/argocd/apps-of-apps/production.yaml
 After running these, ArgoCD took over and started managing the deployments based on the manifests in my Git repository.
 
 > Please review for checks like argocd installlation, canary updates installation, prometheus installation, gatewayAPI ready cluster updates etc , [refer to the 4.7 Log Output GitOps instructions](https://github.com/TheGrinderAC/devops-with-kubernetes/blob/4.8/log_output/readme.md).
+
+> For production postgress backup need this secret(check), for gcp service permission
+> ` kubectl create secret generic gcs-secret --from-file=key.json=key.json -n production  --dry-run=client -o yaml | kubectl apply -f -`
