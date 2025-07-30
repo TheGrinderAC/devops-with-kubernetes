@@ -41,33 +41,40 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED_FILES"
 
+          # Initialize flags
+          BROADCASTER_CHANGED=false
+          TODO_APP_CHANGED=false
+          TODO_BACKEND_CHANGED=false
+
           # Check if each app directory has changes
           if echo "$CHANGED_FILES" | grep -q "^broadcaster/"; then
-            echo "broadcaster=true" >> $GITHUB_OUTPUT
+            BROADCASTER_CHANGED=true
             echo "Broadcaster has changes"
           else
-            echo "broadcaster=false" >> $GITHUB_OUTPUT
             echo "Broadcaster has no changes"
           fi
 
           if echo "$CHANGED_FILES" | grep -q "^todo app/"; then
-            echo "todo-app=true" >> $GITHUB_OUTPUT
+            TODO_APP_CHANGED=true
             echo "Todo-app has changes"
           else
-            echo "todo-app=false" >> $GITHUB_OUTPUT
             echo "Todo-app has no changes"
           fi
 
           if echo "$CHANGED_FILES" | grep -q "^todo-backend/"; then
-            echo "todo-backend=true" >> $GITHUB_OUTPUT
+            TODO_BACKEND_CHANGED=true
             echo "Todo-backend has changes"
           else
-            echo "todo-backend=false" >> $GITHUB_OUTPUT
             echo "Todo-backend has no changes"
           fi
 
+          # Set outputs
+          echo "broadcaster=$BROADCASTER_CHANGED" >> $GITHUB_OUTPUT
+          echo "todo-app=$TODO_APP_CHANGED" >> $GITHUB_OUTPUT
+          echo "todo-backend=$TODO_BACKEND_CHANGED" >> $GITHUB_OUTPUT
+
           # Set any-changed flag
-          if [[ "${{ steps.changes.outputs.broadcaster }}" == "true" || "${{ steps.changes.outputs.todo-app }}" == "true" || "${{ steps.changes.outputs.todo-backend }}" == "true" ]]; then
+          if [[ "$BROADCASTER_CHANGED" == "true" || "$TODO_APP_CHANGED" == "true" || "$TODO_BACKEND_CHANGED" == "true" ]]; then
             echo "any=true" >> $GITHUB_OUTPUT
           else
             echo "any=false" >> $GITHUB_OUTPUT
@@ -169,9 +176,12 @@ jobs:
   deploy:
     name: Update GitOps Configuration
     runs-on: ubuntu-latest
-    needs:
-      [detect-changes, build-broadcaster, build-todo-app, build-todo-backend]
-    if: needs.detect-changes.outputs.any-changed == 'true'
+    needs: [detect-changes]
+    # Only depend on detect-changes, and use always() to run even if build jobs are skipped
+    if: |
+      always() && 
+      needs.detect-changes.outputs.any-changed == 'true' &&
+      (needs.detect-changes.result == 'success')
 
     steps:
       - name: Checkout
@@ -188,32 +198,49 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Wait for builds to complete
+        run: |
+          echo "Waiting for any running build jobs to complete..."
+          # This step ensures we wait for builds before updating GitOps configs
+          sleep 10
+
       - name: Update kustomization files
         run: |
+          cd project-gitops-config-repo || { echo "GitOps repo directory not found"; exit 1; }
+
           # Update broadcaster if it was built
           if [[ "${{ needs.detect-changes.outputs.broadcaster-changed }}" == "true" ]]; then
-            if [ -f "project-gitops-config-repo/apps/brodcaster/overlays/staging/kustomization.yaml" ]; then
-              cd project-gitops-config-repo/apps/brodcaster/overlays/staging
+            if [ -f "apps/broadcaster/overlays/staging/kustomization.yaml" ]; then
+              cd apps/broadcaster/overlays/staging
               kustomize edit set image broadcaster=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:${{ github.sha }}
               echo "Updated broadcaster kustomization"
+              cd ../../../../
+            else
+              echo "Warning: broadcaster kustomization file not found"
             fi
           fi
 
           # Update todo-app if it was built
           if [[ "${{ needs.detect-changes.outputs.todo-app-changed }}" == "true" ]]; then
-            if [ -f "project-gitops-config-repo/apps/todo-app/overlays/staging/kustomization.yaml" ]; then
-              cd project-gitops-config-repo/apps/todo-app/overlays/staging
+            if [ -f "apps/todo-app/overlays/staging/kustomization.yaml" ]; then
+              cd apps/todo-app/overlays/staging
               kustomize edit set image todo-app=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-app:${{ github.sha }}
               echo "Updated todo-app kustomization"
+              cd ../../../../
+            else
+              echo "Warning: todo-app kustomization file not found"
             fi
           fi
 
           # Update todo-backend if it was built
           if [[ "${{ needs.detect-changes.outputs.todo-backend-changed }}" == "true" ]]; then
-            if [ -f "project-gitops-config-repo/apps/todo-backend/overlays/staging/kustomization.yaml" ]; then
-              cd project-gitops-config-repo/apps/todo-backend/overlays/staging
+            if [ -f "apps/todo-backend/overlays/staging/kustomization.yaml" ]; then
+              cd apps/todo-backend/overlays/staging
               kustomize edit set image todo-backend=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-backend:${{ github.sha }}
               echo "Updated todo-backend kustomization"
+              cd ../../../../
+            else
+              echo "Warning: todo-backend kustomization file not found"
             fi
           fi
 

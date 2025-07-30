@@ -46,4 +46,4 @@ kubectl apply -f project-gitops-config-repo/argocd/apps-of-apps/production.yaml
 
 After running these, ArgoCD took over and started managing the deployments based on the manifests in my Git repository.
 
-> Please review for checks like argocd installlation, canary updates installation, prometheus installation, gatewayAPI ready cluster updates etc , [refer to the 4.7 Log Output GitOps instructions](https://github.com/TheGrinderAC/devops-with-kubernetes/blob/4.8/log_output/readme.md).
+> Please review for checks like argocd installlation, canary updates installation, prometheus installation, gatewayAPI ready cluster updates etc , [refer to the 4.7 Log Output GitOps instructions](https://github.com/TheGrinderAC/devops-with-kubernetes/blob/4.8/log_output/readme.md)!
