@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: pg-backup-cron
-  namespace: project
 spec:
   schedule: "0 0 * * *"
   successfulJobsHistoryLimit: 3
