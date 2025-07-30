@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend-dep
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: check-db
+          env:
+            - name: POSTGRES_SERVICE_NAME
+              value: "staging-postgres-service"

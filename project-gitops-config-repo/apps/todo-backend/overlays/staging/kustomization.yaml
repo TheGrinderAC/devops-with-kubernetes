@@ -1,10 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../../base
+  - ../../base
+
+patches:
+  - path: postgres-service-patch.yaml
 
 namePrefix: staging-
 images:
-- name: todo-backend
-  newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-backend
-  newTag: 5ac58636ed3ee87d95f1150518dca2b67dcdea80
+  - name: todo-backend
+    newName: us-central1-docker.pkg.dev/master-coder-465618-q6/my-repository/todo-backend
+    newTag: 5ac58636ed3ee87d95f1150518dca2b67dcdea80

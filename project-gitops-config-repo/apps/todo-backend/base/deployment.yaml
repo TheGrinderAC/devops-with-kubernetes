@@ -16,11 +16,12 @@ spec:
         - name: check-db
           image: busybox:1.28
           command:
-            [
-              "sh",
-              "-c",
-              "until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;",
-            ]
+            - "sh"
+            - "-c"
+            - "until nc -z ${POSTGRES_SERVICE_NAME} 5432; do echo waiting for postgres at ${POSTGRES_SERVICE_NAME}; sleep 2; done;"
+          env:
+            - name: POSTGRES_SERVICE_NAME
+              value: "postgres-service" # Default value for base
       containers:
         - name: todo-backend
           image: todo-backend
