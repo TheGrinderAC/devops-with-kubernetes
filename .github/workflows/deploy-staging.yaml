@@ -5,35 +5,85 @@ on:
     branches:
       - main
     paths:
-      - 'broadcaster/**'
-      - 'todo app/**'
-      - 'todo-backend/**'
+      - "broadcaster/**"
+      - "todo app/**"
+      - "todo-backend/**"
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: git-operations-staging-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Build, Push and Deploy to Staging
+  detect-changes:
+    name: Detect Changed Applications
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app: [
-          {name: "broadcaster", path: "broadcaster"},
-          {name: "todo-app", path: "todo app"},
-          {name: "todo-backend", path: "todo-backend"}
-        ]
+    outputs:
+      broadcaster-changed: ${{ steps.changes.outputs.broadcaster }}
+      todo-app-changed: ${{ steps.changes.outputs.todo-app }}
+      todo-backend-changed: ${{ steps.changes.outputs.todo-backend }}
+      any-changed: ${{ steps.changes.outputs.any }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        run: |
+          # Get the list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if each app directory has changes
+          if echo "$CHANGED_FILES" | grep -q "^broadcaster/"; then
+            echo "broadcaster=true" >> $GITHUB_OUTPUT
+            echo "Broadcaster has changes"
+          else
+            echo "broadcaster=false" >> $GITHUB_OUTPUT
+            echo "Broadcaster has no changes"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^todo app/"; then
+            echo "todo-app=true" >> $GITHUB_OUTPUT
+            echo "Todo-app has changes"
+          else
+            echo "todo-app=false" >> $GITHUB_OUTPUT
+            echo "Todo-app has no changes"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^todo-backend/"; then
+            echo "todo-backend=true" >> $GITHUB_OUTPUT
+            echo "Todo-backend has changes"
+          else
+            echo "todo-backend=false" >> $GITHUB_OUTPUT
+            echo "Todo-backend has no changes"
+          fi
+
+          # Set any-changed flag
+          if [[ "${{ steps.changes.outputs.broadcaster }}" == "true" || "${{ steps.changes.outputs.todo-app }}" == "true" || "${{ steps.changes.outputs.todo-backend }}" == "true" ]]; then
+            echo "any=true" >> $GITHUB_OUTPUT
+          else
+            echo "any=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-broadcaster:
+    name: Build Broadcaster
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.broadcaster-changed == 'true'
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: GCP Auth
         uses: google-github-actions/auth@v2
@@ -47,24 +97,134 @@ jobs:
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
 
       - name: Build and Push Image
+        id: build
         run: |
-          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/${{ matrix.app.name }}:${{ github.sha }}"
-          docker build -t $IMAGE_TAG "./${{ matrix.app.path }}"
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:${{ github.sha }}"
+          docker build -t $IMAGE_TAG "./broadcaster"
           docker push $IMAGE_TAG
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  build-todo-app:
+    name: Build Todo App
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.todo-app-changed == 'true'
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        id: build
+        run: |
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-app:${{ github.sha }}"
+          docker build -t $IMAGE_TAG "./todo app"
+          docker push $IMAGE_TAG
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  build-todo-backend:
+    name: Build Todo Backend
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.todo-backend-changed == 'true'
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        id: build
+        run: |
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-backend:${{ github.sha }}"
+          docker build -t $IMAGE_TAG "./todo-backend"
+          docker push $IMAGE_TAG
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Update GitOps Configuration
+    runs-on: ubuntu-latest
+    needs:
+      [detect-changes, build-broadcaster, build-todo-app, build-todo-backend]
+    if: needs.detect-changes.outputs.any-changed == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2
 
-      - name: Update Kustomization
+      - name: Configure Git
         run: |
-          cd project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/staging
-          kustomize edit set image ${{ matrix.app.name }}=${{ env.IMAGE_TAG }}
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update kustomization files
+        run: |
+          # Update broadcaster if it was built
+          if [[ "${{ needs.detect-changes.outputs.broadcaster-changed }}" == "true" ]]; then
+            if [ -f "project-gitops-config-repo/apps/brodcaster/overlays/staging/kustomization.yaml" ]; then
+              cd project-gitops-config-repo/apps/brodcaster/overlays/staging
+              kustomize edit set image broadcaster=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/broadcaster:${{ github.sha }}
+              echo "Updated broadcaster kustomization"
+            fi
+          fi
+
+          # Update todo-app if it was built
+          if [[ "${{ needs.detect-changes.outputs.todo-app-changed }}" == "true" ]]; then
+            if [ -f "project-gitops-config-repo/apps/todo-app/overlays/staging/kustomization.yaml" ]; then
+              cd project-gitops-config-repo/apps/todo-app/overlays/staging
+              kustomize edit set image todo-app=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-app:${{ github.sha }}
+              echo "Updated todo-app kustomization"
+            fi
+          fi
+
+          # Update todo-backend if it was built
+          if [[ "${{ needs.detect-changes.outputs.todo-backend-changed }}" == "true" ]]; then
+            if [ -f "project-gitops-config-repo/apps/todo-backend/overlays/staging/kustomization.yaml" ]; then
+              cd project-gitops-config-repo/apps/todo-backend/overlays/staging
+              kustomize edit set image todo-backend=us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/todo-backend:${{ github.sha }}
+              echo "Updated todo-backend kustomization"
+            fi
+          fi
 
       - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Deploy ${{ matrix.app.name }} to staging"
-          file_pattern: "project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/staging/kustomization.yaml"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+        run: |
+          cd project-gitops-config-repo
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Deploy changed apps to staging - Commit: ${{ github.sha }}"
+            git push origin main
+            echo "Successfully pushed changes to GitOps repository"
+          fi
