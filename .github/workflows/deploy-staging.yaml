@@ -176,12 +176,16 @@ jobs:
   deploy:
     name: Update GitOps Configuration
     runs-on: ubuntu-latest
-    needs: [detect-changes]
-    # Only depend on detect-changes, and use always() to run even if build jobs are skipped
+    needs:
+      [detect-changes, build-broadcaster, build-todo-app, build-todo-backend]
+    # Wait for all build jobs to complete (whether successful or skipped)
     if: |
       always() && 
       needs.detect-changes.outputs.any-changed == 'true' &&
-      (needs.detect-changes.result == 'success')
+      needs.detect-changes.result == 'success' &&
+      (needs.build-broadcaster.result == 'success' || needs.build-broadcaster.result == 'skipped') &&
+      (needs.build-todo-app.result == 'success' || needs.build-todo-app.result == 'skipped') &&
+      (needs.build-todo-backend.result == 'success' || needs.build-todo-backend.result == 'skipped')
 
     steps:
       - name: Checkout
@@ -198,11 +202,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Wait for builds to complete
+      - name: Verify build completion
         run: |
-          echo "Waiting for any running build jobs to complete..."
-          # This step ensures we wait for builds before updating GitOps configs
-          sleep 10
+          echo "Build job results:"
+          echo "- Broadcaster: ${{ needs.build-broadcaster.result }}"
+          echo "- Todo App: ${{ needs.build-todo-app.result }}"
+          echo "- Todo Backend: ${{ needs.build-todo-backend.result }}"
+          echo ""
+          echo "All required builds have completed. Proceeding with GitOps update..."
 
       - name: Update kustomization files
         run: |
