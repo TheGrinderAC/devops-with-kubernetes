@@ -1,13 +1,13 @@
 name: Log_Output Build and Publish Application
 
-on:
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
-    paths:
-      - "log_output/**"
+# on:
+#   push:
+#     branches:
+#       - "**"
+#     tags-ignore:
+#       - "**"
+#     paths:
+#       - "log_output/**"
 
 permissions:
   contents: write

@@ -38,7 +38,7 @@ const connectToNATS = async () => {
       for await (const m of sub) {
         try {
           const todo = JSON.parse(sc.decode(m.data));
-
+          // 4.10
           if (process.env.NODE_ENV === "staging") {
             console.log("Staging environment: not forwarding to Discord.");
             console.log("Received todo message:", todo);

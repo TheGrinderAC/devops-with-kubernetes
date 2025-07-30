@@ -4,3 +4,4 @@ metadata:
   name: broadcaster-config
 data:
   NODE_ENV: "staging"
+  DISCORD_WEBHOOK_URL: ""

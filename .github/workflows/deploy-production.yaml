@@ -1,14 +1,66 @@
-# Rough
-# Each tagged commit results in deployment to the production environment
+name: Deploy to Production
 
-# need to change the logOutputMS(pong)_argocd && todoapp-gke-rollout accordingly! clean up not needed either as logic & structure chnages
+on:
+  push:
+    tags:
+      - 'v*.*.*'
 
-# Tag commit → GitHub Actions → Build image → Push to GAR →
-# Update apps/[app]/overlays/production/kustomization.yaml →
-# ArgoCD detects change → Deploys to production namespace
+permissions:
+  contents: write
 
-# onetime setup script needed
+concurrency:
+  group: git-operations-production-${{ github.ref }}
+  cancel-in-progress: false
 
-# # Deploy app-of-apps (this is the ONLY manual kubectl apply needed)
-# kubectl apply -f argocd/app-of-apps/staging.yaml
-# kubectl apply -f argocd/app-of-apps/production.yaml
+jobs:
+  deploy:
+    name: Build, Push and Deploy to Production
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [
+          {name: "broadcaster", path: "broadcaster"},
+          {name: "todo-app", path: "todo app"},
+          {name: "todo-backend", path: "todo-backend"}
+        ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        run: |
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GKE_PROJECT }}/my-repository/${{ matrix.app.name }}:${{ github.ref_name }}"
+          docker build -t $IMAGE_TAG "./${{ matrix.app.path }}"
+          docker push $IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update Kustomization
+        run: |
+          cd project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/production
+          kustomize edit set image ${{ matrix.app.name }}=${{ env.IMAGE_TAG }}
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Deploy ${{ matrix.app.name }} to production"
+          file_pattern: "project-gitops-config-repo/apps/${{ matrix.app.name }}/overlays/production/kustomization.yaml"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
