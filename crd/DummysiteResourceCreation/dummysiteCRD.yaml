@@ -1,0 +1,36 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dummysites.stable.dwk # Must be <plural>.<group>
+spec:
+  group: stable.dwk # My custom API group
+  scope: Namespaced # either Namespaced or Cluster
+  names:
+    kind: DummySite # What users will write in YAML
+    plural: dummysites # For URLs like /api/v1/dummysites
+    singular: dummysite # # singular name to be used as an alias on the CLI and for display
+    shortNames:
+      - ds
+  versions:
+    - name: v1
+      served: true # Each version can be enabled/disabled by Served flag.
+      storage: true # One and only one version must be marked as the storage version.
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                website_url:
+                  type: string
+              required:
+                - website_url
+      additionalPrinterColumns:
+        - name: Website
+          type: string
+          description: The URL of the website to copy
+          jsonPath: .spec.website_url
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
