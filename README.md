@@ -59,3 +59,7 @@
 - [4.8](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.8/todo%20app)
 - [4.9](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.9/todo%20app)
 - [4.10](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/4.10/todo%20app)
+
+> - Chaptra 6
+
+- [5.1](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.1/crd)
