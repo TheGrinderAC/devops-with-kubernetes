@@ -63,3 +63,4 @@
 > - Chaptra 6
 
 - [5.1](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.1/crd)
+- [5.2](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.2/service-mesh/bookstoreApp)
