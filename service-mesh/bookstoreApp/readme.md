@@ -35,8 +35,10 @@ sudo modprobe xt_connmark
 With everything ready, I installed Istio with the **ambient** profile:
 
 ```bash
-istioctl install --set profile=ambient --skip-confirmation
+istioctl install --set profile=ambient --set values.global.platform=k3d --skip-confirmation
 ```
+
+[k3d specific cmd `--set values.global.platform=k3d`]
 
 ## Step 5 – Install Gateway API CRDs
 
@@ -278,4 +280,3 @@ kubectl delete namespace istio-system
 # Remove Gateway API CRDs
 kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
 ```
-
