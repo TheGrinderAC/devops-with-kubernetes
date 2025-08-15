@@ -66,3 +66,4 @@
 - [5.2](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.2/service-mesh/bookstoreApp)
 - [5.3](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.3/log_output)
 - [5.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.4/service-mesh/sidecar)
+- [5.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.4/serverless)
