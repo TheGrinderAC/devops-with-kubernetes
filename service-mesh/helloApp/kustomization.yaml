@@ -1,0 +1,9 @@
+resources:
+  - manifests/deployment-service.yaml
+
+  # using Kubernetes Gateway and HTTRoute
+  # - manifests/gateway-httpRoute.yaml
+  # - manifests/hello-route.yaml
+
+  # with Istio Gateway and VirtualService resources:
+  - manifests/isto-gateway-vitural-service.yaml

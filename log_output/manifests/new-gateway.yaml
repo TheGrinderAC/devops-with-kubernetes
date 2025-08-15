@@ -1,0 +1,52 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: log-gateway
+  namespace: istio-ingress # Changed to match ingress gateway namespace
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: pong-service
+  namespace: exercises
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - istio-ingress/log-gateway # Full namespace/name reference
+  http:
+    - match:
+        - uri:
+            prefix: /pingpong
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: pong-application-svc
+            port:
+              number: 2345
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: log-output-svc
+            port:
+              number: 80
+          weight: 75
+        - destination:
+            host: log-output-svc2
+            port:
+              number: 80
+          weight: 25

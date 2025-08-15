@@ -37,6 +37,7 @@ app.get("/", async (req, res) => {
 
     // Get env variable
     const message = process.env.MESSAGE || "No message set";
+    const greetings = process.env.GREETING || "No Greet set";
 
     // Get pong count
     const response = await axios.get(`${PONG_APP_URL}/pong-count`);
@@ -53,7 +54,7 @@ app.get("/", async (req, res) => {
 
     // Respond in the requested format
     res.send(
-      `file content: ${fileContent}\nenv variable: MESSAGE=${message}\n${timestamp}: ${randomString}.\nPing / Pongs: ${pongs}\n`
+      `File Content: ${fileContent}\nEnv Variable: MESSAGE=${message}\nTimestamp: ${timestamp}\nRandom String: ${randomString}\nPing / Pongs: ${pongs}\nGreet: ${greetings}.\n`
     );
   } catch (err) {
     console.error(

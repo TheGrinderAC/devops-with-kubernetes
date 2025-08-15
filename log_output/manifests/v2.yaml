@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-output-config-v2
+  namespace: exercises
+data:
+  MESSAGE: "hello world"
+  GREETING: "hello from Version 2"
+  information.txt: |
+    this text is from file
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-output-v2
+  namespace: exercises
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logoutput-v2
+  template:
+    metadata:
+      labels:
+        app: logoutput-v2
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: log-output-config-v2
+      containers:
+        - name: log-output
+          image: log_output
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-config-v2
+                  key: MESSAGE
+            - name: GREETING
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-config-v2
+                  key: GREETING
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-output-svc2
+  namespace: exercises
+spec:
+  type: ClusterIP
+  selector:
+    app: logoutput-v2
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 3000

@@ -1,12 +1,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- manifests/configmap.yaml
-- manifests/deployment.yaml
-- manifests/gateway.yaml
-- manifests/routes.yaml
-- manifests/service.yaml
+  # v1
+  - manifests/v1.yaml
+  # v2
+  - manifests/v2.yaml
+  # with service mesh
+  - manifests/new-gateway.yaml
+
 images:
-- name: log_output
-  newName: bidhe1/log_output
-  newTag: 61297f75addd8cfc0b08b256205a92b07ce1cd97
+  - name: log_output
+    newName: bidhe1/log_output:v1.1

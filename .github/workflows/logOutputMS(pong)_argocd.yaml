@@ -1,13 +1,13 @@
 name: pong-application Build and Publish Application
 
-on:
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
-    paths:
-      - "pong-application/**"
+# on:
+#   push:
+#     branches:
+#       - "**"
+#     tags-ignore:
+#       - "**"
+#     paths:
+#       - "pong-application/**"
 
 permissions:
   contents: write

@@ -2,12 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: exercises
 resources:
-- manifests/postgres-secret.yaml
-- manifests/postgres-statefulset.yaml
-- manifests/deploymentArgo.yaml
-- manifests/service.yaml
-- manifests/analysis-template.yaml
+  - manifests/postgres-secret.yaml
+  - manifests/postgres-statefulset.yaml
+  - manifests/deployment-mesh.yaml
+  - manifests/service.yaml
+
 images:
-- name: pong_application
-  newName: bidhe1/pong_application
-  newTag: 8ff12ed212549a5623ab63d400403152dfa8e3cc
+  - name: pong_application
+    newName: bidhe1/pong_application:v1.2
