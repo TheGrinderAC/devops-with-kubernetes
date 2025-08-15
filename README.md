@@ -67,4 +67,4 @@
 - [5.3](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.3/log_output)
 - [5.4](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.4/service-mesh/sidecar)
 - [5.6](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.6/serverless)
-- [5.7](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.6/pong-application/serverless)
+- [5.7](https://github.com/TheGrinderAC/devops-with-kubernetes/tree/5.7/pong-application/serverless)
