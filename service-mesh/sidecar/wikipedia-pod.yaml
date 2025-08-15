@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikipedia-server
+  labels:
+    app: wikipedia-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wikipedia-server
+  template:
+    metadata:
+      labels:
+        app: wikipedia-server
+    spec:
+      volumes:
+        - name: public-www
+          emptyDir: {}
+      containers:
+        - name: main-container
+          image: nginx
+          volumeMounts:
+            - name: public-www
+              mountPath: /usr/share/nginx/html
+        - name: sidecar-container
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "while true; do sleep $(( ( RANDOM % 600 ) + 300 )); wget -O /usr/share/nginx/html/index.html https://en.wikipedia.org/wiki/Special:Random; done",
+            ]
+          volumeMounts:
+            - name: public-www
+              mountPath: /usr/share/nginx/html
+      initContainers:
+        - name: init-container
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "wget -O /usr/share/nginx/html/index.html https://en.wikipedia.org/wiki/Kubernetes",
+            ]
+          volumeMounts:
+            - name: public-www
+              mountPath: /usr/share/nginx/html
